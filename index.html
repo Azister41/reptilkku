@@ -300,13 +300,24 @@
   <button id="btnEditProfil" class="secondary-btn" style="display:none;margin-top:12px;padding:8px 16px" onclick="openProfilModal()">✏️ Ubah profil</button>
 </div>
       <div class="info-card" style="margin-top:16px">
-        <button class="menu-row" onclick="alert('Fitur daftar reptil akan dibuat pada tahap berikutnya.')">🦎 &nbsp; Reptil peliharaan saya <span>›</span></button>
+        <button class="menu-row" onclick="showPage('chat')">💬 &nbsp; Chat Anggota</button>
         <button class="menu-row" onclick="alert('Fitur favorit akan dibuat pada tahap berikutnya.')">❤ &nbsp; Spesies favorit <span>›</span></button>
         <button class="menu-row" onclick="alert('Pengaturan akun akan dibuat setelah database tersedia.')">⚙️ &nbsp; Pengaturan <span>›</span></button>
         <button id="akunLogout" class="menu-row" style="display:none" onclick="komLogout()">🚪 &nbsp; Keluar <span>›</span></button>
         <button class="menu-row" onclick="alert('ReptilKu versi awal 1.0')">ⓘ &nbsp; Tentang ReptilKu <span>›</span></button>
       </div>
-    </section>
+    </section>   
+    <section id="page-chat" class="page">
+  <h1 class="page-title">Chat Anggota</h1>
+  <p class="page-subtitle">Ngobrol bareng pecinta reptil</p>
+  
+  <div id="chatBox" style="background:white; height:60vh; overflow-y:auto; padding:12px; border-radius:12px; margin-top:12px; color:black;"></div>
+  
+  <div style="display:flex; gap:8px; margin-top:12px;">
+    <input id="inputChat" type="text" placeholder="Tulis pesan..." style="flex:1; padding:12px; border-radius:25px; border:1px solid #ccc;">
+    <button onclick="kirimPesan()" style="padding:12px 18px; border-radius:25px; background:#0a3d1a; color:white; border:none;">Kirim</button>
+  </div>
+</section>   
   </main>
 
   <nav class="bottom-nav" aria-label="Navigasi utama">
@@ -821,7 +832,7 @@ updateTombolFavorit();
   }
   
 
-const validPages = ["home", "ensiklopedia", "perawatan", "komunitas", "akun"];
+const validPages = ["home", "ensiklopedia", "perawatan", "komunitas", "akun", "chat"];
 const startPage = location.hash.slice(1);
 if (validPages.includes(startPage)) showPage(startPage);
 </script>
@@ -838,6 +849,28 @@ const firebaseConfig = {
 };
 const app = initializeApp(firebaseConfig), auth = getAuth(app), db = getFirestore(app);
 const $ = id => document.getElementById(id);
+// === CHAT ANGGOTA ===
+const qChat = query(collection(db, "chat_global"), orderBy("waktu"));
+onSnapshot(qChat, (snap) => {
+  const box = document.getElementById('chatBox');
+  if(!box) return;
+  box.innerHTML = "";
+  snap.forEach(d => {
+    const m = d.data();
+    box.innerHTML += `<div style="margin-bottom:8px; color:black"><b>${m.pengirim}:</b> ${m.pesan}</div>`;
+  });
+  box.scrollTop = box.scrollHeight;
+});
+window.kirimPesan = async () => {
+  const input = document.getElementById('inputChat');
+  if(!input || !input.value.trim()) return;
+  await addDoc(collection(db, "chat_global"), {
+    pengirim: auth.currentUser?.displayName || auth.currentUser?.email || "Mas ais",
+    pesan: input.value,
+    waktu: serverTimestamp()
+  });
+  input.value = "";
+}
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pesan = e => ({'auth/invalid-credential':'Email atau kata sandi salah.','auth/email-already-in-use':'Email sudah terdaftar.','auth/weak-password':'Kata sandi minimal 6 karakter.','auth/invalid-email':'Format email tidak valid.'}[e.code] || 'Terjadi kesalahan: ' + e.code);
 let user = null, unsub = null, daftar = false;
