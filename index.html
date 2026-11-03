@@ -194,9 +194,10 @@
         <p>Temukan informasi spesies, pelajari kebutuhan perawatan, dan tumbuh bersama komunitas pecinta reptil.</p>
         <div class="hero-art"></div>
       </div>
-  <div style="display:flex; gap:10px; margin:16px 0; overflow-x:auto; padding-bottom:4px">
-  <div onclick="showPage('penyakit')" style="background:#173d30; color: white; padding:12px 16px; border-radius:14px; white-space:nowrap; cursor:pointer; font-weight:600">Penyakit</div>
-</div>   
+  <div style="display:flex; gap:8px; margin:8px 0 12px 0;">
+  <div onclick="showPage('penyakit')" style="background:#173d30; color:white; padding:8px 14px; border-radius:20px; font-size:13px; white-space:nowrap; cursor:pointer; font-weight:600; line-height:1;">Penyakit</div>
+  <div onclick="cariDokter()" style="background:#173d30; color:white; padding:8px 14px; border-radius:20px; font-size:13px; white-space:nowrap; cursor:pointer; font-weight:600; line-height:1;"> Dokter Terdekat</div>
+</div>  
       
       <div class="search-wrap">
         <span>⌕</span>
@@ -1044,6 +1045,101 @@ if ('serviceWorker' in navigator) {
     }
   });
 })();
+</script>
+<div id="modalDokter" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; padding:20px; overflow:auto;">
+  <div style="background:#FFFEF7; border-radius:20px; max-width:500px; margin:20px auto; padding:20px;">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <h3 style="color:#1B4332; margin:0;">Dokter Hewan Terdekat</h3>
+    <div onclick="document.getElementById('modalDokter').style.display='none'" style="background:#173d30; color:white; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;">✕</div>
+  </div>
+  <p id="statusDokter" style="color:gray; margin:10px 0;">Meminta izin lokasi...</p>
+  <div id="listDokter"></div>
+</div>
+    <p id="statusDokter" style="color:gray; margin:10px 0;">Mencari lokasi kamu...</p>
+    <div id="listDokter"></div>
+  </div>
+</div>
+
+<script>
+async function cariDokter() {
+  const modal = document.getElementById('modalDokter');
+  const status = document.getElementById('statusDokter');
+  const list = document.getElementById('listDokter');
+  modal.style.display = 'block';
+  status.innerText = '📡 Meminta izin lokasi...';
+  list.innerHTML = '<p style="text-align:center; padding:10px;">Mencari...</p>';
+
+  // Lokasi default Bergas-Kidul kalau GPS gagal
+  let lat = -7.309; 
+  let lon = 110.432;
+
+  async function tampilkanDokter(lat, lon, pakaiGPS) {
+    status.innerText = pakaiGPS ? 'Lokasi ditemukan! Mencari dokter...' : 'GPS mati, menampilkan dokter di sekitar Bergas/Semarang:';
+    
+    // Query Overpass
+    let query = `[out:json];(node["amenity"="veterinary"](around:15000,${lat},${lon}););out center 20;`;
+    let url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
+
+    try {
+      let res = await fetch(url);
+      let data = await res.json();
+      list.innerHTML = '';
+
+      if (!data.elements || data.elements.length === 0) {
+        status.innerText = 'Di OpenStreetMap belum banyak data, coba cari di Google Maps:';
+        list.innerHTML = `<a href="https://www.google.com/maps/search/dokter+hewan+terdekat/@${lat},${lon},13z" target="_blank" style="display:block; text-align:center; background:#173d30; color:white; padding:12px; border-radius:12px; text-decoration:none; margin-top:10px;">🔍 Buka Google Maps</a>`;
+        return;
+      }
+
+      status.innerText = `Ditemukan ${data.elements.length} dokter terdekat:`;
+      data.elements.forEach(el => {
+        let nama = el.tags.name || 'Klinik Hewan';
+        let alamat = el.tags['addr:full'] || el.tags['addr:street'] || 'Alamat cek di Maps';
+        let plat = el.lat || (el.center ? el.center.lat : lat);
+        let plon = el.lon || (el.center ? el.center.lon : lon);
+        let jarak = hitungJarak(lat, lon, plat, plon);
+
+        list.innerHTML += `
+          <div style="border:1px solid #E0E0E0; border-radius:15px; padding:12px; margin:8px 0; background:white;">
+            <b style="color:#173d30;">${nama}</b><br>
+            <span style="color:#555; font-size:13px;">📍 ${alamat}</span><br>
+            <span style="color:#2D6A4F; font-size:12px; font-weight:600;">${jarak.toFixed(1)} km</span><br>
+            <a href="https://www.google.com/maps/dir/?api=1&destination=${plat},${plon}" target="_blank" style="display:inline-block; margin-top:6px; background:#173d30; color:white; padding:6px 12px; border-radius:10px; text-decoration:none; font-size:12px;">Buka Maps</a>
+          </div>
+        `;
+      });
+    } catch(e) {
+      status.innerText = 'Gagal: ' + e.message;
+      list.innerHTML = `<a href="https://www.google.com/maps/search/dokter+hewan+terdekat/@${lat},${lon},13z" target="_blank" style="display:block; text-align:center; background:#173d30; color:white; padding:12px; border-radius:12px; text-decoration:none;">🔍 Buka Google Maps</a>`;
+    }
+  }
+
+  if (!navigator.geolocation) {
+    tampilkanDokter(lat, lon, false);
+    return;
+  }
+
+  // Kasih timeout 4 detik, kalau GPS diem langsung fallback ke Bergas
+  let timeoutId = setTimeout(() => {
+    tampilkanDokter(lat, lon, false);
+  }, 4000);
+
+  navigator.geolocation.getCurrentPosition((pos) => {
+    clearTimeout(timeoutId);
+    tampilkanDokter(pos.coords.latitude, pos.coords.longitude, true);
+  }, (err) => {
+    clearTimeout(timeoutId);
+    tampilkanDokter(lat, lon, false);
+  }, { enableHighAccuracy: false, timeout: 4000, maximumAge: 60000 });
+}
+
+function hitungJarak(lat1, lon1, lat2, lon2) {
+  let R = 6371;
+  let dLat = (lat2-lat1)*Math.PI/180;
+  let dLon = (lon2-lon1)*Math.PI/180;
+  let a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
 </script>
 </body>
 </html>
