@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="id">
+    <style>
+    :root {
+      --forest: #173d30;
+      --forest-2: #245743;
+      --leaf: #3f805c;
+      --cream: #f5f3e9;
+      --paper: #fffef9;
+      --ink: #20342a;
+      --muted: #78847b;
+      --line: #e7e9df;
+      --gold: #d5a84b;
+      --shadow: 0 12px 30px rgba(24, 55, 40, .08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--cream); color: var(--ink);
+      font-family: Arial, Helvetica, sans-serif; padding-bottom: 86px;
+    }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    .app { max-width: 520px; min-height: 100vh; margin: auto; background: var(--cream); }
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 20px 20px 14px;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand-mark{
+  width:36px; 
+  height:36px; 
+  background:transparent; 
+  display:flex; 
+  align-items:center; 
+  justify-content:center;
+  overflow:hidden;
+}
+    .brand-name { font-size: 20px; font-weight: 800; letter-spacing: -.5px; color: var(--forest); }
+    .brand-tag { color: var(--muted); font-size: 10px; margin-top: 2px; }
+    .icon-button {
+      width: 40px; height: 40px; border: 1px solid var(--line); border-radius: 14px;
+      background: var(--paper); color: var(--forest); font-size: 18px;
+    }
+    .page { display: none; padding: 8px 18px 24px; animation: appear .2s ease; }
+    .page.active { display: block; }
+    @keyframes appear { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+    .hero {
+      border-radius: 24px; padding: 23px 20px; color: white; overflow: hidden;
+      background: radial-gradient(circle at 90% 10%, rgba(129,171,111,.42), transparent 34%),
+                  linear-gradient(135deg, #173d30, #286044);
+      position: relative; box-shadow: var(--shadow);
+    }
+    .eyebrow { color: #d6e5d5; text-transform: uppercase; letter-spacing: 1.8px; font-size: 10px; font-weight: 700; }
+    .hero h1 { font-size: 27px; line-height: 1.16; margin: 10px 0 8px; max-width: 290px; }
+    .hero p { color: #dce9df; font-size: 12px; line-height: 1.6; max-width: 290px; margin: 0 0 18px; }
+    .hero-art { position: absolute; right: 8px; bottom: 4px; font-size: 86px; opacity: .22; transform: rotate(-12deg); }
+    .search-wrap { margin: 16px 0 21px; position: relative; }
+    .search-wrap span { position: absolute; left: 15px; top: 13px; color: var(--muted); }
+    .search-wrap input {
+      width: 100%; border: 1px solid var(--line); outline: none; border-radius: 15px;
+      padding: 14px 14px 14px 42px; background: var(--paper); color: var(--ink);
+    }
+    .search-wrap input:focus { border-color: var(--leaf); box-shadow: 0 0 0 3px rgba(63,128,92,.1); }
+    .section-head { display: flex; justify-content: space-between; align-items: center; margin: 21px 0 12px; }
+    .section-head h2 { font-size: 16px; margin: 0; color: var(--forest); }
+    .text-link { border: 0; background: transparent; color: var(--leaf); font-size: 11px; font-weight: 700; }
+    .category-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; }
+    .category {
+      border: 1px solid var(--line); background: var(--paper); border-radius: 16px;
+      padding: 12px 4px 10px; color: var(--ink); text-align: center;
+    }
+    .category img {
+      width: 100%; height: 70px; object-fit: contain;
+      display: block; margin-bottom: 6px;
+    }
+    #page-ensiklopedia .category img { height: 44px; }
+    #page-ensiklopedia .category .emoji { height: 44px; display: grid; place-items: center; }
+    .category .emoji { height: 80px; display: grid; place-items: center; font-size: 40px; margin-bottom: 6px; }
+    .category small { font-size: 10px; font-weight: 700; }
+    .category.selected { border-color: var(--leaf); background: #eaf1e8; }
+    .animal-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
+    .animal-card {
+      background: var(--paper); border: 1px solid var(--line); border-radius: 18px;
+      overflow: hidden; box-shadow: 0 5px 16px rgba(24,55,40,.04);
+    }
+    .animal-art {
+      height: 112px; display: grid; place-items: center; font-size: 58px;
+      background: linear-gradient(145deg, #e3eadb, #cbd9c5);
+    }
+    .animal-info { padding: 11px; }
+    .animal-info h3 { margin: 0 0 4px; font-size: 14px; color: var(--forest); }
+    .latin { color: var(--muted); font-size: 10px; font-style: italic; }
+    .animal-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+    .tag { display: inline-block; padding: 5px 8px; border-radius: 20px; background: #edf2e9; color: var(--forest-2); font-size: 9px; font-weight: 700; }
+    .open-card { border: 0; background: var(--forest); color: white; border-radius: 9px; padding: 7px 9px; font-size: 10px; }
+    .notice {
+      background: #fff7e4; border: 1px solid #f0dfb7; border-radius: 14px;
+      padding: 12px; color: #715b2c; font-size: 11px; line-height: 1.5; margin-top: 16px;
+    }
+    .page-title { margin: 7px 0 5px; font-size: 23px; color: var(--forest); }
+    .page-subtitle { margin: 0 0 17px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .info-card { background: var(--paper); border: 1px solid var(--line); border-radius: 17px; padding: 15px; margin: 11px 0; }
+    .info-card h3 { margin: 0 0 8px; font-size: 14px; color: var(--forest); }
+    .info-card p, .info-card li { color: #58675d; font-size: 12px; line-height: 1.65; }
+    .info-card ul { padding-left: 18px; margin: 7px 0 0; }
+    .detail-banner { background: linear-gradient(135deg, #dce8d5, #b9d0b4); border-radius: 20px; padding: 25px; text-align: center; font-size: 76px; margin: 12px 0; }
+    .detail-actions { display: flex; gap: 8px; margin: 14px 0; }
+    .primary-btn, .secondary-btn { border-radius: 12px; padding: 12px 14px; font-weight: 700; font-size: 12px; }
+    .primary-btn { background: var(--forest); color: white; border: 0; }
+    .secondary-btn { background: var(--paper); color: var(--forest); border: 1px solid var(--line); }
+    .detail-actions button { flex: 1; }
+    .community-empty { text-align: center; padding: 30px 18px; background: var(--paper); border: 1px solid var(--line); border-radius: 20px; }
+    .community-empty .big { font-size: 48px; }
+    .community-empty h3 { color: var(--forest); margin: 10px 0 6px; }
+    .community-empty p { color: var(--muted); font-size: 12px; line-height: 1.6; }
+    .profile-head { text-align: center; padding: 22px; background: var(--forest); color: white; border-radius: 20px; }
+    .avatar { width: 66px; height: 66px; border-radius: 50%; background: #dce8d5; display: grid; place-items: center; margin: 0 auto 10px; font-size: 32px; }
+    .profile-head p { color: #dce9df; font-size: 11px; margin-bottom: 0; }
+    .menu-row { width: 100%; display: flex; justify-content: space-between; padding: 15px 3px; border: 0; border-bottom: 1px solid var(--line); background: transparent; text-align: left; color: var(--ink); font-size: 13px; }
+    .bottom-nav {
+      position: fixed; z-index: 20; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 100%; max-width: 520px; display: grid; grid-template-columns: repeat(5,1fr);
+      padding: 9px 5px calc(9px + env(safe-area-inset-bottom)); background: rgba(255,254,249,.97);
+      border-top: 1px solid var(--line); backdrop-filter: blur(12px);
+    }
+    .nav-item { border: 0; background: transparent; color: #8a958c; font-size: 9px; display: grid; justify-items: center; gap: 4px; padding: 3px 0; }
+    .nav-item span { font-size: 19px; line-height: 1; }
+    .nav-item.active { color: var(--forest); font-weight: 800; }
+    .empty-result { grid-column: 1 / -1; padding: 22px; text-align: center; color: var(--muted); font-size: 12px; }
+    .back-btn { border: 0; background: transparent; color: var(--leaf); font-weight: 700; padding: 7px 0; }
+    @media (min-width: 600px) {
+      body { padding: 18px 0; }
+      .app { min-height: calc(100vh - 36px); border-radius: 24px; overflow: hidden; box-shadow: var(--shadow); }
+      .bottom-nav { bottom: 18px; border-radius: 0 0 24px 24px; }
+    }
+    .nav-icon{
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  margin-bottom: 3px;
+  display: block;
+}
+.nav-item{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.kom-input{width:100%;padding:12px;border-radius:12px;border:1.5px solid var(--line);margin:0 0 10px;background:var(--paper);outline:none}
+.kom-input:focus{border-color:var(--leaf)}
+.post{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:14px;margin:12px 0}
+.post-head{display:flex;align-items:center;gap:10px}
+.post-head .av{width:36px;height:36px;border-radius:50%;background:#dce8d5;display:grid;place-items:center}
+.post-head small{color:var(--muted);font-size:10px;display:block}
+.post p{font-size:13px;line-height:1.6;margin:10px 0;white-space:pre-wrap}
+.post-actions{display:flex;gap:6px;border-top:1px solid var(--line);padding-top:8px}
+.post-actions button{flex:1;border:0;background:transparent;color:var(--muted);font-size:12px;font-weight:700}
+.post-actions button.on{color:#d33}
+.cmt{font-size:12px;background:var(--cream);border-radius:12px;padding:8px 10px;margin:6px 0}
+.link-btn{border:0;background:transparent;color:var(--leaf);font-weight:700;font-size:12px;width:100%;margin-top:8px}
+  </style>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#173d30">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="apple-touch-icon" href="https://i.postimg.cc/9Fh8ntn1/file-0000000066a4821186eff6be1b3897e0-copy-413x413.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>ReptilKu - Kenali, Rawat, Sayangi</title>
+  </head>
+<body>
+<div class="app">
+<header class="topbar">
+    <div class="brand">
+    <div class="brand-mark"><img src="https://i.postimg.cc/9Fh8ntn1/file-0000000066a4821186eff6be1b3897e0-copy-413x413.png"
+    style="width:36px; height:36px; border-radius:10px; object-fit:cover; display:block;">
+</div>
+       <div>
+        <div class="brand-name">ReptilKu</div>
+        <div class="brand-tag">KENALI • RAWAT • SAYANGI</div>
+      </div>
+    </div>
+    <button class="icon-button" onclick="showPage('akun')" aria-label="Buka akun" style="background:transparent; border:none; box-shadow:none;">
+  <img src="https://i.postimg.cc/rFPtZYBV/1793676613731.png" style="width:26px; height:26px;">
+</button>
+  </header>
+
+  <main>
+    <section id="page-home" class="page active">
+      <div class="hero">
+        <div class="eyebrow">Dunia reptil dalam genggaman</div>
+        <h1>Rawat reptilmu dengan lebih baik.</h1>
+        <p>Temukan informasi spesies, pelajari kebutuhan perawatan, dan tumbuh bersama komunitas pecinta reptil.</p>
+        <div class="hero-art"></div>
+      </div>
+  <div style="display:flex; gap:10px; margin:16px 0; overflow-x:auto; padding-bottom:4px">
+  <div onclick="showPage('penyakit')" style="background:#173d30; color: white; padding:12px 16px; border-radius:14px; white-space:nowrap; cursor:pointer; font-weight:600">Penyakit</div>
+</div>   
+      
+      <div class="search-wrap">
+        <span>⌕</span>
+        <input id="searchInput" type="search" placeholder="Cari gecko, ular, kura-kura..." oninput="renderAnimals()">
+      </div>
+
+      <div class="section-head">
+        <h2>Jelajahi kategori</h2>
+        <button class="text-link" onclick="filterCategory('Semua')">Lihat semua</button>
+      </div>
+      <div class="category-grid" style="grid-template-columns:repeat(3,1fr)">
+        <button class="category" data-cat="Ular" onclick="filterCategory('Ular')"><img src="https://i.postimg.cc/3xkgdkWW/1793407213152.png" alt="Ular"><small>Ular</small></button>
+        <button class="category" data-cat="Kura-Kura" onclick="filterCategory('Kura-Kura')"><img src="https://i.postimg.cc/HkFb5T7d/1793407069817.png" alt="Kura-Kura"><small>Kura-Kura</small></button>
+        <button class="category" data-cat="Kadal" onclick="filterCategory('Kadal')"><img src="https://i.postimg.cc/mkLtHg3v/1793406615107.png" alt="Kadal"><small>Kadal</small></button>
+       <button class="category" data-cat="Buaya" onclick="filterCategory('Buaya')"><img src="https://i.postimg.cc/cLvQrv6C/1793407186893.png" alt="Buaya"><small>Buaya</small></button>
+      </div>
+
+      <div class="section-head">
+        <h2>Kenali reptil</h2>
+        <button class="text-link" onclick="filterCategory('Semua')">Ensiklopedia →</button>
+      </div>
+      <div id="homeAnimals" class="animal-grid"></div>
+      <div class="notice"><strong>Catatan:</strong> ReptilKu adalah media edukasi. Kebutuhan perawatan berbeda menurut spesies, umur, kondisi individu, dan sumber pemeliharaan. Konfirmasikan panduan penting kepada dokter hewan yang menangani reptil.</div>
+    </section>
+
+    <section id="page-ensiklopedia" class="page">
+      <h1 class="page-title">Ensiklopedia</h1>
+      <p class="page-subtitle">Kenali berbagai jenis reptil dan karakteristiknya.</p>
+      <button id="btnTambahHewan" class="primary-btn" style="display:none;width:100%;margin-bottom:14px" onclick="openHewanModal()">＋ Tambah hewan (admin)</button>
+      <div class="search-wrap"><span>⌕</span><input id="librarySearch" type="search" placeholder="Cari nama atau kategori..." oninput="renderAnimals()"></div>
+      <div class="category-grid" style="margin-bottom:16px">
+        <button class="category selected" data-cat="Semua" onclick="filterCategory('Semua')"><span class="emoji">🌎</span><small>Semua</small></button>
+        <button class="category" data-cat="Ular" onclick="filterCategory('Ular')"><img src="https://i.postimg.cc/3xkgdkWW/1793407213152.png" alt="Ular"><small>Ular</small></button>
+        <button class="category" data-cat="Kura-Kura" onclick="filterCategory('Kura-Kura')"><img src="https://i.postimg.cc/HkFb5T7d/1793407069817.png" alt="Kura-Kura"><small>Kura-Kura</small></button>
+        <button class="category" data-cat="Kadal" onclick="filterCategory('Kadal')"><img src="https://i.postimg.cc/mkLtHg3v/1793406615107.png" alt="Kadal"><small>Kadal</small></button>
+        <button class="category" data-cat="Buaya" onclick="filterCategory('Buaya')"><img src="https://i.postimg.cc/cLvQrv6C/1793407186893.png" alt="Buaya"><small>Buaya</small></button>
+      </div>
+      <div id="libraryAnimals" class="animal-grid"></div>
+      <div class="notice">Daftar spesies akan terus ditambah. Informasi detail yang belum diverifikasi tidak ditampilkan sebagai instruksi perawatan.</div>
+    </section>
+
+    <section id="page-detail" class="page">
+      <button class="back-btn" onclick="showPage('ensiklopedia')">← Kembali ke ensiklopedia</button>
+      <div id="animalDetail"></div>
+    </section>
+
+    <section id="page-perawatan" class="page">
+  <h1 class="page-title">PerawatanKu</h1>
+  <p class="page-subtitle">Koleksi hewan yang Mas rawat - kesimpan otomatis</p>
+  
+  <!-- INI PUNYA MAS YANG BARU - KOLEKSI PRIBADI -->
+  <div id="perawatanList" style="margin-bottom:24px"></div>
+    </section>
+    <section id="page-penyakit" class="page">
+      <h1 class="page-title">Ensiklopedia Penyakit</h1>
+      <p class="page-subtitle">Kenali gejala & obat umum. Wajib konsultasi dokter!</p>
+      <div id="menuPenyakit">
+        <button class="secondary-btn" onclick="tampilPenyakit('semua')">Semua</button>
+        <button class="secondary-btn" onclick="tampilPenyakit('leopard')">Leopard Gecko</button>
+        <button class="secondary-btn" onclick="tampilPenyakit('sulcata')">Sulcata</button>
+        <button class="secondary-btn" onclick="tampilPenyakit('iguana')">Iguana</button>
+        <button class="secondary-btn" onclick="tampilPenyakit('iguana')">Bearded Dragon</button>
+        <button class="secondary-btn" onclick="tampilPenyakit('iguana')">Corn Snake</button>
+        <button class="secondary-btn" onclick="tampilPenyakit('buaya')">Buaya</button>
+        <div id="listPenyakit" style="margin-top:16px"></div>
+      </div>
+    </section>
+    <section id="page-komunitas" class="page">
+  <h1 class="page-title">Komunitas ReptilKu</h1>
+  <p class="page-subtitle">Ruang berbagi pengetahuan bagi pecinta reptil.</p>
+  <div id="kom-auth" class="info-card">
+    <h3>Masuk untuk bergabung</h3>
+    <input id="kom-nama" class="kom-input" placeholder="Nama tampilan" style="display:none">
+    <input id="kom-email" class="kom-input" type="email" placeholder="Email">
+    <input id="kom-pass" class="kom-input" type="password" placeholder="Kata sandi (min. 6 karakter)">
+    <button id="kom-btn" class="primary-btn" style="width:100%" onclick="komSubmit()">Masuk</button>
+    <button id="kom-switch" class="link-btn" onclick="komMode()">Belum punya akun? Daftar</button>
+  </div>
+  <div id="kom-main" style="display:none">
+    <div class="info-card">
+      <textarea id="kom-text" class="kom-input" rows="3" maxlength="1000" placeholder="Bagikan cerita atau pertanyaan seputar reptilmu..."></textarea>
+      <button class="primary-btn" style="width:100%" onclick="komPost()">Posting</button>
+    </div>
+    <div id="kom-feed"></div>
+  </div>
+  <div class="info-card"><h3>Aturan komunitas</h3><ul><li>Utamakan kesejahteraan hewan.</li><li>Jangan mempromosikan perdagangan satwa ilegal.</li><li>Hindari saran medis yang tidak terverifikasi.</li><li>Hormati sesama anggota.</li></ul></div>
+</section>
+
+    <section id="page-akun" class="page">
+      <h1 class="page-title">Akun Saya</h1>
+      <p class="page-subtitle">Kelola profil dan daftar reptil peliharaanmu.</p>
+      <div class="profile-head"><div class="avatar">👤</div><strong>Pengunjung ReptilKu</strong><p>Selamat datang di dunia reptil!</p></div>
+      <div class="info-card" style="margin-top:16px">
+        <button class="menu-row" onclick="alert('Fitur daftar reptil akan dibuat pada tahap berikutnya.')">🦎 &nbsp; Reptil peliharaan saya <span>›</span></button>
+        <button class="menu-row" onclick="alert('Fitur favorit akan dibuat pada tahap berikutnya.')">❤ &nbsp; Spesies favorit <span>›</span></button>
+        <button class="menu-row" onclick="alert('Pengaturan akun akan dibuat setelah database tersedia.')">⚙️ &nbsp; Pengaturan <span>›</span></button>
+        <button id="akunLogout" class="menu-row" style="display:none" onclick="komLogout()">🚪 &nbsp; Keluar <span>›</span></button>
+        <button class="menu-row" onclick="alert('ReptilKu versi awal 1.0')">ⓘ &nbsp; Tentang ReptilKu <span>›</span></button>
+      </div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav" aria-label="Navigasi utama">
+  <button class="nav-item active" data-page="home" onclick="showPage('home')">
+    <img src="https://i.postimg.cc/65mGb1kp/1793676165466.png" class="nav-icon">Beranda
+  </button>
+  <button class="nav-item" data-page="ensiklopedia" onclick="showPage('ensiklopedia')">
+    <img src="https://i.postimg.cc/pX6nc1wP/1793676215721.png" class="nav-icon">Ensiklopedia
+  </button>
+  <button class="nav-item" data-page="perawatan" onclick="showPage('perawatan')">
+    <img src="https://i.postimg.cc/4NSh2FDJ/1793676518578.png" class="nav-icon">Perawatan
+  </button>
+  <button class="nav-item" data-page="komunitas" onclick="showPage('komunitas')">
+    <img src="https://i.postimg.cc/fTr0qgGD/1793676295170.png" class="nav-icon">Komunitas
+  </button>
+  <button class="nav-item" data-page="akun" onclick="showPage('akun')">
+    <img src="https://i.postimg.cc/rFPtZYBV/1793676613731.png" class="nav-icon">Akun
+  </button>
+</nav>
+</div>
+<!-- MODAL TAMBAH / EDIT HEWAN (ADMIN) -->
+<div id="hewanModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:999;align-items:flex-start;justify-content:center;padding:14px;overflow:auto">
+  <div style="background:#fdfbf7;width:100%;max-width:420px;border-radius:24px;padding:20px;margin:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <h3 id="hwJudul" style="margin:0">Tambah Hewan 🦎</h3>
+      <button onclick="closeHewanModal()" style="border:none;background:#eee;width:30px;height:30px;border-radius:50%">✕</button>
+    </div>
+    <label style="font-size:12px;font-weight:700">Foto</label>
+    <img id="hwPreview" alt="Pratinjau" style="display:none;width:100%;height:160px;object-fit:cover;border-radius:14px;margin:6px 0">
+    <input id="hwFoto" class="kom-input" type="file" accept="image/*" onchange="hwPilihFoto(this)">
+    <div id="hwInfoFoto" style="font-size:11px;color:#78847b;margin:-4px 0 10px"></div>
+    <label style="font-size:12px;font-weight:700">Nama hewan</label>
+    <input id="hwNama" class="kom-input" placeholder="Contoh: Leopard Gecko">
+    <label style="font-size:12px;font-weight:700">Nama latin</label>
+    <input id="hwLatin" class="kom-input" placeholder="Contoh: Eublepharis macularius">
+    <label style="font-size:12px;font-weight:700">Kategori</label>
+    <select id="hwKategori" class="kom-input"><option>Ular</option><option>Kura-Kura</option><option>Kadal</option><option>Buaya</option></select>
+    <label style="font-size:12px;font-weight:700">Level perawatan</label>
+    <select id="hwLevel" class="kom-input"><option>Pemula</option><option>Menengah</option><option>Lanjutan</option></select>
+    <label style="font-size:12px;font-weight:700">Tentang spesies</label>
+    <textarea id="hwAbout" class="kom-input" rows="3"></textarea>
+    <label style="font-size:12px;font-weight:700">Informasi perawatan</label>
+    <textarea id="hwPerawatan" class="kom-input" rows="3"></textarea>
+    <label style="font-size:12px;font-weight:700">Kondisi kandang</label>
+    <textarea id="hwKandang" class="kom-input" rows="3"></textarea>
+    <label style="font-size:12px;font-weight:700">Pakan</label>
+    <textarea id="hwPakan" class="kom-input" rows="3"></textarea>
+    <label style="font-size:12px;font-weight:700">Hal yang perlu diperhatikan</label>
+    <textarea id="hwPerhatian" class="kom-input" rows="3"></textarea>
+    <div style="display:flex;gap:8px;margin-top:6px">
+      <button id="hwSimpan" class="primary-btn" style="flex:1" onclick="simpanHewan()">Simpan</button>
+      <button class="secondary-btn" onclick="closeHewanModal()">Batal</button>
+    </div>
+  </div>
+</div>
+<!-- MODAL CATAT PELIHARAAN CANTIK -->
+<div id="catatModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:999;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fdfbf7;width:100%;max-width:380px;border-radius:24px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,0.2)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <h3 style="margin:0">Catat Peliharaan 🦎</h3>
+      <button onclick="closeCatatModal()" style="border:none;background:#eee;width:30px;height:30px;border-radius:50%">✕</button>
+    </div>
+    
+    <div style="text-align:center;margin-bottom:12px">
+      <img id="modalSpeciesImage" src="" style="width:80px;height:80px;border-radius:16px;object-fit:cover">
+      <p id="modalSpeciesName" style="font-weight:bold;margin:6px 0 0 0"></p>
+    </div>
+
+    <input type="hidden" id="modalSpeciesId">
+    <label style="font-size:12px;font-weight:bold">Nama Peliharaan *</label>
+    <input id="petNameInput" placeholder="Contoh: Mochi, Cilo, Leo" style="width:100%;padding:12px;border-radius:12px;border:1.5px solid #ddd;margin:6px 0 12px 0;box-sizing:border-box">
+    
+    <label style="font-size:12px;font-weight:bold">Umur</label>
+    <input id="petAgeInput" placeholder="Contoh: 5 bulan / 1 tahun" style="width:100%;padding:12px;border-radius:12px;border:1.5px solid #ddd;margin:6px 0 12px 0;box-sizing:border-box">
+    
+    <label style="font-size:12px;font-weight:bold">Tanggal Adopsi</label>
+    <input id="petDateInput" type="date" style="width:100%;padding:12px;border-radius:12px;border:1.5px solid #ddd;margin:6px 0 12px 0;box-sizing:border-box">
+
+    <label style="font-size:12px;font-weight:bold">Catatan kecil</label>
+    <textarea id="petNoteInput" placeholder="Contoh: Lagi shedding, suka sembunyi di hide cave" style="width:100%;padding:12px;border-radius:12px;border:1.5px solid #ddd;margin:6px 0 16px 0;box-sizing:border-box;height:60px"></textarea>
+
+    <button onclick="savePeliharaan()" style="width:100%;background:#1b4332;color:white;border:none;padding:14px;border-radius:16px;font-weight:bold;font-size:15px">Simpan ke Perawatanku</button>
+  </div>
+</div>
+<!-- MODAL CATAT MAKAN -->
+<div id="feedModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;padding:20px">
+  <div style="background:white;width:100%;max-width:340px;border-radius:20px;padding:20px">
+    <h3 style="margin:0">🍽️ Catat Makan <span id="feedPetName"></span></h3>
+    <input type="hidden" id="feedPetId">
+    <label style="font-size:12px;font-weight:bold;margin-top:12px;display:block">Makan apa hari ini?</label>
+    <select id="feedType" style="width:100%;padding:12px;border-radius:12px;border:1.5px solid #ddd;margin:6px 0 12px 0">
+      <option>Jangkrik</option><option>Dubia Roach</option><option>Ulat Hongkong</option><option>Ulat Jerman</option><option>Pinkie Mouse</option><option>Sayur</option>
+    </select>
+    <label style="font-size:12px;font-weight:bold">Jumlah</label>
+    <input id="feedJumlah" type="number" placeholder="Contoh: 5 ekor" style="width:100%;padding:12px;border-radius:12px;border:1.5px solid #ddd;margin:6px 0 16px 0">
+    <div style="display:flex;gap:8px">
+      <button onclick="document.getElementById('feedModal').style.display='none'" style="width:50%;padding:12px;border-radius:12px;border:1px solid #ddd;background:#f5f5f5">Batal</button>
+      <button onclick="saveFeed()" style="width:50%;padding:12px;border-radius:12px;border:none;background:#1b4332;color:white;font-weight:bold">Simpan</button>
+    </div>
+  </div>
+</div>
+<script>
+// FAVORIT SYSTEM
+let favorites = JSON.parse(localStorage.getItem('reptilku_fav') || '[]');
+function toggleFavorite(id) {
+  if(favorites.includes(id)) {
+    favorites = favorites.filter(f => f !== id);
+  } else {
+    favorites.push(id);
+  }
+  localStorage.setItem('reptilku_fav', JSON.stringify(favorites));
+  openAnimal(id); // refresh tombolnya
+  alert(favorites.includes(id) ? 'Disimpan ke favorit!' : 'Dihapus dari favorit');
+}
+function isFav(id) { return favorites.includes(id); }
+// ===== CATAT PELIHARAAN SYSTEM PRO =====
+let myPets = JSON.parse(localStorage.getItem('reptilku_pets') || '[]');
+
+function openCatatModal(animalId){
+  const animal = animals.find(a => a.id === animalId);
+  document.getElementById('modalSpeciesId').value = animal.id;
+  document.getElementById('modalSpeciesImage').src = animal.image;
+  document.getElementById('modalSpeciesName').innerText = animal.name;
+  document.getElementById('petNameInput').value = '';
+  document.getElementById('petAgeInput').value = '';
+  document.getElementById('petDateInput').valueAsDate = new Date();
+  document.getElementById('petNoteInput').value = '';
+  document.getElementById('catatModal').style.display = 'flex';
+}
+function closeCatatModal(){
+  document.getElementById('catatModal').style.display = 'none';
+}
+function savePeliharaan(){
+  const nama = document.getElementById('petNameInput').value.trim();
+  if(!nama){ alert('Nama wajib diisi Mas!'); return; }
+  
+  myPets.push({
+    petId: Date.now(),
+    petName: nama,
+    petAge: document.getElementById('petAgeInput').value || '-',
+    petDate: document.getElementById('petDateInput').value,
+    petNote: document.getElementById('petNoteInput').value,
+    speciesId: parseInt(document.getElementById('modalSpeciesId').value),
+    speciesName: document.getElementById('modalSpeciesName').innerText,
+    speciesImage: document.getElementById('modalSpeciesImage').src
+  });
+  localStorage.setItem('reptilku_pets', JSON.stringify(myPets));
+  closeCatatModal();
+  alert(nama + ' berhasil dicatat! Cek menu Perawatan ya Mas!');
+  if(typeof renderPerawatan === 'function') renderPerawatan();
+}
+
+function renderPerawatan(){
+  const container = document.getElementById('perawatanList');
+  if(!container) return;
+  if(myPets.length === 0){
+    container.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#888"><div style="font-size:50px">🦎</div><p>Belum ada peliharaan.<br>Catat dari Ensiklopedia dulu Mas!</p></div>';
+    return;
+  }
+  container.innerHTML = myPets.map(p => {
+    const lastFeed = p.feeds && p.feeds.length > 0 ? p.feeds[p.feeds.length-1].type + ' - ' + p.feeds[p.feeds.length-1].date : 'Belum pernah';
+    const lastShed = p.lastShedding || 'Belum pernah';
+    return `
+    <div style="background:white;border-radius:20px;padding:16px;margin-bottom:16px;box-shadow:0 2px 12px rgba(0,0,0,0.08)">
+      <div style="display:flex;gap:12px;align-items:center">
+        <img src="${p.speciesImage}" style="width:64px;height:64px;border-radius:14px;object-fit:cover">
+        <div style="flex:1">
+          <b style="font-size:16px">${p.petName}</b> <small style="background:#e8f5e9;padding:2px 8px;border-radius:20px">${p.speciesName}</small><br>
+          <small style="color:#666">Umur: ${p.petAge} • Adopsi: ${p.petDate}</small>
+        </div>
+        <button onclick="hapusPet(${p.petId})" style="border:none;background:#ffebee;color:#c62828;border-radius:50%;width:36px;height:36px">❌</button>
+      </div>
+      <div style="background:#fdfbf7;border-radius:12px;padding:10px;margin-top:12px;font-size:12px;color:#555">
+         Makan terakhir: <b>${lastFeed}</b><br>
+         Shedding terakhir: <b>${lastShed}</b><br>
+        Catatan: ${p.petNote || '-'}
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button onclick="openFeedModal(${p.petId})" style="flex:1;background:#e8f5e9;border:none;padding:10px;border-radius:12px;font-size:12px;font-weight:bold;color:#1b4332"> Catat Makan</button>
+        <button onclick="catatShedding(${p.petId})" style="flex:1;background:#fff3e0;border:none;padding:10px;border-radius:12px;font-size:12px;font-weight:bold;color:#e65100"> Shedding</button>
+      </div>
+    </div>
+    `;
+  }).join('');
+}
+
+function hapusPet(petId){
+  if(!confirm('Hapus peliharaan ini Mas?')) return;
+  myPets = myPets.filter(p => p.petId !== petId);
+  localStorage.setItem('reptilku_pets', JSON.stringify(myPets));
+  renderPerawatan();
+}
+function openFeedModal(petId){
+  const pet = myPets.find(p=>p.petId===petId);
+  document.getElementById('feedPetId').value = petId;
+  document.getElementById('feedPetName').innerText = pet.petName;
+  document.getElementById('feedModal').style.display='flex';
+}
+function saveFeed(){
+  const petId = parseInt(document.getElementById('feedPetId').value);
+  const pet = myPets.find(p=>p.petId===petId);
+  if(!pet.feeds) pet.feeds = [];
+  pet.feeds.push({
+    type: document.getElementById('feedType').value,
+    jumlah: document.getElementById('feedJumlah').value,
+    date: new Date().toLocaleDateString('id-ID')
+  });
+  localStorage.setItem('reptilku_pets', JSON.stringify(myPets));
+  document.getElementById('feedModal').style.display='none';
+  renderPerawatan();
+  alert('Makan dicatat untuk ' + pet.petName + ' ❤️');
+}
+function catatShedding(petId){
+  const pet = myPets.find(p=>p.petId===petId);
+  pet.lastShedding = new Date().toLocaleDateString('id-ID');
+  localStorage.setItem('reptilku_pets', JSON.stringify(myPets));
+  renderPerawatan();
+  alert(pet.petName + ' dicatat shedding hari ini! 🐍 Ingat jaga kelembapan ya Mas!');
+}
+  const animals = [
+  { 
+  id: 1, 
+  name: "Leopard Gecko", 
+  latin: "Eublepharis macularius", 
+  category: "Kadal", 
+  emoji: "🦎", 
+  image: "https://i.postimg.cc/fLmsS2sw/grok-1793605576029.jpg",
+  level: "Pemula",
+  about: "Tokek Leopard adalah jenis tokek yang terdapat di Pakistan, India dan Iran. Tokek ini adalah binatang hias dan menjadi hewan peliharaan populer karena warna tubuhnya yang indah dan perawatannya yang mudah.",
+  perawatan: "Suhu kandang <strong>28-32°C</strong> siang, <strong>22-24°C</strong> malam. Kelembapan <strong>30-40%</strong>. Gak butuh UVB tapi butuh kalsium D3.",
+  kandang: "Minimal 60x40x40cm atau 2x ukuran Gecko, alas tissue atau karpet reptil, sediakan 2 hiding cave (panas & dingin).<br> Rajin bersihkan PUP atau saat keadaan kandanh kotor.",
+  pakan: "Jangkrik, dubia, ulat hongkong. Dusting kalsium tiap 2 hari. Dewasa makan 2-3x seminggu, sebaiknya ditaburi bubuk kalaium saat pemberian pakan.<br>Sediakan air bersih untuk minum. ",
+  perhatian: "Jangan pegang ekornya, bisa putus! Cuci tangan sebelum & sesudah handle.<br>Ekor menyusut drastis dalam 1-2 minggu, badan kurus tapi makan tetep lahap awalnya, lama-lama muntah, pup encer / berlendir, perut bengkak sedikit.<br>Makan banyak tapi tetep kurus, ekor gak gemuk-gemuk, pup bau banget, kadang ada cacing putih kecil di pup.",
+},
+    { id: 2, name: "Iguana", latin: "Iguana iguana", category: "Kadal", emoji: "🦎", image: "https://i.postimg.cc/c4QWL5mv/file-000000004d788211bc7da3c11beda7b5-copy-477x358-picsay.png", level: "Pemula", about: "Iguana adalah marga kadal yang hidup di daerah tropis Amerika Tengah, Amerika Selatan, dan kepulauan Karibia.<br>Iguana hidup 15-20 tahun di penangkaran dan bisa tumbuh sampai sekitar 1,8 meter (termasuk ekor), berat 7 kg.",
+    perawatan: "Supaya bisa mencerna makanan dengan benar, iguana butuh suhu di habitatnya yang nyaman <strong>32-35°C</strong>, kelembapan <strong>60-70%</strong>. Pakai lampu penghangat buat ngatur suhu (intinya rajin jemur). ", kandang: "Untuk kandang disarankan sekitar 4-5x panjang iguana, itu dikarenakan jika terlalu kecil maka iguana bisa stres dan mengganggu pertumbuhannya.<br> Hindari kandang Ram yang terlalu kecil dikarenakan terkadang kuku bisa copot.", pakan: "Sawi, Kangkung, Pepaya, Pisang, Wortel.<br>Sediakan air bersih setiap hari.", perhatian:"Jangan sampai Iguana kekurangan sinar matahari/ UV. Bisa membuatnya kekurangan kalsium/MBD.<br>Iguana tidak boleh memakan serangga, mamalia kecil, atau daging sama sekali karena protein hewani dapat memicu gagal ginjal yang fatal. Pakan utamanya murni berupa sayuran hijau gelap, labu, dan sedikit buah-buahan." },
+    { id: 3, name: "Ball Python", latin: "Python regius", category: "Ular", emoji: "🐍", image:"https://i.postimg.cc/dQbt5C3s/grok-1793608912569.jpg", level: "Menengah", about: "Ular piton asal Afrika Barat dan Tengah. Namanya berasal dari kebiasaan menggulung tubuh saat merasa terancam.<br>Termasuk jenis piton Afrika paling kecil dengan panjang dewasa rata-rata sekitar 1,2 hingga 1,8 meter (maksimal sekitar 182 cm) dan tubuh yang relatif pendek serta kekar.<br>Sangat populer di kalangan pehobi reptil karena memiliki ratusan variasi warna dan motif kulit unik hasil penangkaran (morph).", perawatan: "Lakukan spot cleaning harian untuk membuang kotoran dan bersihkan total seluruh substrat serta mangkuk air secara rutin guna mencegah infeksi saluran pernapasan atau pembusukan sisik (scale rot).", kandang: "Dibutuhkan kandang berukuran <strong>120*60*60</strong> untuk size dewasa atau 2-3* lipat ukuran ular.<br>Sediakan juga setidaknya dua tempat sembunyi (hides), satu di area hangat dan satu di area sejuk, agar ular merasa aman. Substrat yang baik untuk menjaga kelembapan antara lain cocopeat, cocohusk, atau cypress mulch.<br>Suhu dan kelembapan antaranya: <strong>31-33°C</strong> untuk zona hangat, <strong>24-26°C</strong> untuk zona sejuk dan kelembapan <strong>50-60%</strong> tetapi saat ular mau shedding naikan kelembapan menjadi <strong>70-80%</strong> dengan cara menyemprotkan ke subtrat.", pakan: "Mencit (Mice): Sangat cocok untuk ball python yang masih anakan (baby/juvenile) karena ukurannya yang kecil dan pas dengan rahangnya.<br>​Tikus besar (Rat): Pilihan terbaik untuk ular dewasa karena memiliki rasio kalsium, protein, dan lemak yang jauh lebih padat dan mengenyangkan.<br>​Anak ayam (DOC): Bisa diberikan sesekali sebagai variasi atau untuk memancing nafsu makan, tetapi kandungan nutrisinya kurang lengkap jika dijadikan pakan utama.<br>​African Soft Fur (ASF): Ini adalah mangsa alami mereka di alam liar dan sangat ampuh untuk mengatasi ular yang sedang mogok makan, meski harganya relatif mahal.", perhatian:"Hal paling krusial yang perlu diwaspadai saat merawat ball python adalah tingkat stres dan ketidaksesuaian lingkungan yang dapat memicu masalah mogok makan serta infeksi fisik.<br>​Mogok Makan (Fasting): Ular ini sangat terkenal sering menolak makan selama berminggu-minggu bahkan berbulan-bulan akibat stres, suhu yang kurang hangat, kandang yang terlalu terbuka tanpa tempat sembunyi, atau karena siklus musim.<br>​Infeksi Pernapasan: Segera tangani jika ular terlihat bernapas dengan mulut terbuka, mengeluarkan bunyi mengi saat bernapas, atau terdapat gelembung lendir di sekitar hidung dan mulut akibat suhu kandang yang terlalu dingin.<br>​Gagal Ganti Kulit (Stuck Shed): Kelembapan udara yang kurang dari <strong>70%</strong> saat masa shedding akan membuat kulit lama atau tutup mata transparan (eye caps) menempel kuat pada tubuhnya.<br>​Pembusukan Sisik (Scale Rot): Meskipun butuh lembap, jangan biarkan lantai terarium terus-menerus basah atau becek karena dapat menyebabkan infeksi bakteri dan luka lepuh pada sisik perut ular.<br>​Jamur pada Terarium: Mengingat kebutuhan kelembapan yang konsisten di dalam kandang, selalu periksa dan bersihkan bibit jamur yang rentan tumbuh pada sudut-sudut substrat atau rangka kandang, terutama jika menggunakan material rakitan dari kayu reng."},
+    { id: 4, name: "Corn Snake", latin: "Pantherophis guttatus", category: "Ular", emoji: "🐍", image:"https://i.postimg.cc/QCs17yRq/file-000000006be48207875e6f3e70f3c17b-copy-551x310.png", level: "Pemula", about: "Corn Snake (Pantherophis guttatus) adalah ular tidak berbisa asal Amerika Utara yang paling populer untuk pemula. Sifatnya sangat jinak, jarang menggigit, dan memiliki ratusan variasi warna (morph) seperti Amel, Anery, Snow seperti di foto. Panjang dewasa 120-150cm, umur bisa 20-25 tahun. Aktif di sore-malam dan suka memanjat.", perawatan:"Cocok untuk keeper pertama kali. Corn snake termasuk ular yang toleran terhadap kesalahan perawatan ringan dan jarang mogok makan dibandingkan Ball Python. Handle 2-3x seminggu selama 10-15 menit untuk menjaga jinak. Cuci tangan sebelum dan sesudah handle. Jangan handle 48 jam setelah makan agar tidak muntah.", kandang:"Baby: Kandang 40x30x30cm cukup. Dewasa: Minimal 90x45x45cm.<br>Suhu: Sisi dingin <strong>24-26°C</strong>, sisi hangat <strong>28-30°C</strong>, titik basking <strong>32°C</strong>. Malam boleh turun ke <strong>21-23°C</strong>. <br>Kelembapan: <strong>50-60%</strong>, naikkan ke <strong>65-70%</strong> saat shedding. Beri 2 hiding cave (sisi panas & dingin) + water bowl + ranting untuk panjat.<br>Alas: Tisu/koran untuk baby, cocopeat/aspian untuk dewasa. Jangan pakai pasir.<br>Lampu: Tidak wajib UVB, tapi UVB 5.0 12 jam sangat membantu kesehatan.", pakan:"Karnivora - Mencit (mouse).<br>Baby: Pinky mouse 1 ekor / 5-7 hari.<br>Juvenile: Fuzzy mouse 1 ekor / 7 hari.<br>Dewasa: Adult mouse 1 ekor / 7-10 hari.<br>Beri pakan dengan pinset, jangan pakai tangan. Ukuran mangsa maksimal 1.5x lebar badan ular. Sediakan air minum bersih selalu. Suplemen kalsium + D3 bisa ditabur di mencit 1x seminggu.", perhatian:"JAGO KABUR: Lubang 1cm saja bisa lolos, pastikan kandang rapat.<br>Muntah: Jangan beri makan terlalu besar dan jangan handle setelah makan.<br>Gagal shedding: Jika kulit tidak lepas sempurna, cek kelembapan dan beri rendaman air hangat 30°C selama 15 menit.<br>Pup: Normalnya 2-4 hari setelah makan. Jika tidak pup lebih dari 2 minggu + perut bengkak, periksa suhu kandang.<br>Bukan ular untuk digabung, harus soliter 1 kandang 1 ekor."},
+    { id: 5, name: "Sulcata", latin: "Centrochelys sulcata", category: "Kura-Kura", emoji: "🐢", image: "https://i.postimg.cc/cJN5gggh/file-000000004d788211bc7da3c11beda7b5-copy-477x358.png", level: "Menengah", about: "Kura-kura darat asal wilayah Sahel, Afrika, dan salah satu kura-kura darat terbesar ke 3 di dunia.", perawatan: "Sulcata termasuk kura-kura yang kuat tapi butuh komitmen seumur hidup karena umurnya bisa 100 tahun. Dia tidak hibernasi, jadi butuh kehangatan sepanjang tahun. Harus rutin direndam air hangat 2-3x seminggu selama 20 menit untuk mencegah dehidrasi dan membantu BAB. Sering ajak berjemur pagi. Jangan pelihara di lantai keramik licin, bisa bikin kaki cacat.", kandang:"Minimal 3x6 meter untuk 1 ekor dewasa atau 3x ukuran kura. Makin besar makin bagus karena dia suka jalan terus.<br>Untuk suhu basking spot <strong>35-40°C</strong>, area dingin <strong>27-30°C</strong>, malam jangan di bawah 24°C. Pakai lampu UVA + UVB 10.0 - 12.0 nyala 12 jam.<br>Kelembapan ideal <strong>40-60%</strong> untuk dewasa, <strong>60-80%</strong> untuk anakan biar tempurung mulus tidak piramiding.<br>Alas campuran tanah + cocopeat + pasir, tebal 15cm karena dia suka gali. Rumput sintetis juga bisa buat alas. selain itu bisa: Coco husk, Forest bark, dan serutan kayu pine.<br> Untuk lampu UVB sangat wajib, hidup malam hari/ saat cuaca musim hujan dan kurang terkena sinar matahari.<br>Tempat sembunyi sediakan rumah kayu.", pakan:"<strong>90%</strong> RUMPUT & HAY: Rumput gajah, rumput timothy hay, hay alfalfa (dikit). Ini makanan utama WAJIB ada tiap hari.<br><strong>10%</strong> Sayur & Bunga: Kangkung, sawi hijau, daun murbei, bunga sepatu (hibiscus), daun pepaya.<br>Buah: Hanya sebagai cemilan 1x seminggu, misal pepaya, pisang (sedikit saja).<br>Suplemen: Tabur kalsium tanpa D3 tiap hari, kalsium + D3 2x seminggu, multivitamin reptil 1x seminggu.<br>Sediakan mangkuk air lebar yang dangkal, ganti tiap hari.<br>Jangan kasih pelet kucing/anjing, jangan kasih sayur tinggi oksalat tiap hari (bayam, kangkung air kebanyakan), jangan tomat & kentang.", perhatian: "Tempurung jadi benjol-benjol kayak piramid kalau kelembapan rendah + kurang rendam + kurang kalsium. Ini permanen tidak bisa balik mulus.<br> Banyak orang bingung sulcata pas udah 50kg karena kandang kekecilan. Pikir panjang sebelum beli.<br> Dia bisa gali lubang sedalam 3 meter dan jebol pagar. Kandang harus ada pondasi semen di bawah.<br>Jangan campur sama kura lain, bisa berantem dan nular penyakit.<br>Kalau kurang minum dan kurang rendam, bisa kena batu kandung kemih, operasi mahal.<br>Jangan paksa hibernasi, sulcata dari Afrika tidak hibernasi."},  
+    { id: 6, name: "Bearded Dragon", latin: "Pogona vitticeps", category: "Kadal", emoji: "🦎",image:"https://i.postimg.cc/k5Z8g4J1/grok-1793606017563.jpg", level: "Menengah", about: "Kadal diurnal asal Australia dengan duri di area tenggorokan yang dapat mengembang.", perawatan:"Memelihara bearded dragon relatif mudah, namun mereka membutuhkan pengaturan lingkungan buatan yang sangat spesifik karena asalnya dari gurun.<br>Wajib menyediakan lampu UVB untuk membantu mereka mensintesis Vitamin D3 agar terhindar dari Metabolic Bone Disease (penyakit tulang rapuh).<br>Memperlukan lampu UVA / Basking sebagai sumber panas untuk membantu sistem pencernaan mereka.", kandang:"Kandang bearded dragon dewasa yang ideal harus berukuran minimal 120 x 60 x 60 cm (atau kapasitas 3-5x ukuran nya) dengan pengaturan gradien suhu gurun yang spesifik. Karena mereka adalah reptil aktif dan semi-arboreal (suka memanjat), luas lantai dan ketinggian kandang sangat krusial agar mereka tidak stres.<br>Area Berjemur (Basking Spot): Pasang lampu UVA/Basking. Suhu permukaan tempat bertengger harus mencapai <strong>35°C – 43°C</strong>.<br>Area Dingin (Cool Spot): Sisi kandang sebaliknya harus dibiarkan lebih sejuk dengan suhu <strong>25°C – 28°C</strong> untuk tempat mereka berteduh.<br>Lampu UVB: Wajib menyala 10–12 jam sehari di siang hari. Gunakan lampu khusus reptil gurun (seperti UVB 10.0 atau 12%) untuk mencegah penyakit pelunakan tulang.<br>Malam Hari: Matikan semua lampu. Mereka membutuhkan kegelapan total dan penurunan suhu (minimal <strong>21°C</strong>) untuk tidur dengan nyenyak.<br> Gunakan alas koran,karpet reptil, tisu teba, atau forest bark", pakan:"BAYI (0-6 bulan) - Fokus Protein<br>70% serangga, 30% sayur. Pakan: Jangkrik kecil, Dubia kecil, Black Soldier Fly Larvae (BSFL). Kasih 3x sehari, sepuasnya dalam 10 menit. Sayur: Cincang halus sawi hijau, labu butternut.<br><br>REMAJA (6-12 bulan)<br>50% serangga, 50% sayur. Pakan: Jangkrik, Dubia ukuran sedang. 1-2x sehari. Sayur mulai dibanyakin.<br><br>DEWASA (1 tahun+) - Fokus Sayur<br>70% sayur, 30% serangga. Sayur (tiap hari): Sawi hijau (collard greens), pakcoy, sawi putih, labu, wortel parut, paprika. Buah (2x seminggu aja buat snack): Pepaya, pisang, mangga, blueberry - jangan banyak, gula tinggi. Serangga (2-3x seminggu): Dubia, jangkrik, BSFL.<br><br><strong>WAJIB Tambahan</strong>:<br>Kalsium: Tabur kalsium tanpa D3 di setiap pakan serangga. Kalsium + D3 2x seminggu.<br>Jemur/UVB: Wajib lampu UVB 10.0, kalau gak ada MBD pasti.<br>Air: Semprot sayurnya, atau kasih rendam hangat 2x seminggu.<br><br><strong>JANGAN DIKASIH</strong> (bisa mati):<br>Kunang-kunang / firefly = Racun mematikan.<br>Alpukat, selada iceberg (gak ada gizi, bikin mencret).<br>Serangga liar dari kebun (banyak pestisida).", perhatian:"MBD:Kaki gemeter, rahang lembek / bengkok, jalan diseret, ekor bengkok.<br>Sembelit / Impaksi: Gak pup 1 minggu+, perut keras, gak mau makan, kaki belakang lemes.<br>Pilek / Respiratory Infection: Mangap terus, ada lendir di mulut, bunyi ngik-ngik pas napas, kepala ngangkat ke atas.<br> Busuk Ekor & Jamur (Tail Rot / Yellow Fungus): Ujung ekor hitam kering, Luka gak ketahuan + kandang kotor. Ini DARURAT: Yellow Fungus menular dan bisa mati. Pisahin langsung, bawa ke dokter hewan.<br>Cacingan & Koksidia: Makan lahap tapi kurus, pup bau busuk + cair terus, lesu."}, 
+    { id: 7, name: "Buaya Muara", latin: "Crocodylus porosus", category: "Buaya", emoji: "🐊", image:"https://i.postimg.cc/26Fpqh7w/file-000000004d788211bc7da3c11beda7b5-copy-477x358-picsay.png", level: "Tidak boleh dipelihara secara bebas", about:"Buaya Muara adalah buaya terbesar di dunia, panjang bisa 6-7 meter. Predator puncak, sangat agresif dan teritorial. TERMASUK HEWAN DILINDUNGI UU, tidak untuk pemula dan wajib izin BKSDA.",
+
+  perawatan: "Hewan dilindungi, pemeliharaan hanya untuk lembaga konservasi / penangkaran resmi. Butuh penanganan ahli, tidak bisa di-handle bebas seperti ular/kadal. Umur bisa 70+ tahun.",
+
+  kandang: "Butuh kolam besar minimal 10x5 meter dengan daratan dan air. Air harus bersih mengalir, kedalaman 1-2m. Suhu air <strong>28-32°C</strong>, basking area <strong>35°C</strong>. Pagar beton tinggi 3m + kawat listrik. WAJIB izin.",
+
+  pakan: "Karnivora murni.<br>Anakan: ikan, katak, serangga besar.<br> Dewasa: ayam utuh, ikan besar, daging merah. Pakan 1x seminggu (dewasa).<br>Jangan beri makan dengan tangan, pakai capit panjang 2 meter.",
+
+  perhatian: "GIGITAN MEMATIKAN - jangan pernah masuk kandang sendirian.<br>Dilindungi, pelihara ilegal bisa pidana 5 tahun. <br>Butuh biaya pakan & listrik kolam sangat besar.<br>Tidak bisa dijinakkan.<br>Wajib lapor BKSDA jika menemukan/merescue."
+},
+    ];
+  const penyakitReptil = [
+  {
+    id: "mbd",
+    nama: "MBD (Tulang Lunak)",
+    hewan: "Iguana, Kura-kura, Leopard Gecko, Bearded Dragon",
+    ciri: "Kaki bengkok, rahang lembek, gemetar, jalan kayak robot, tempurung kura lembek",
+    penyebab: "Kurang UVB + kurang kalsium + kurang vitamin D3",
+    pencegahan: "Lampu UVB 10.0 nyala 12 jam, ganti 6 bulan sekali, tabur kalsium tiap hari",
+    obatUmum: "Kalsium cair + vitamin D3, injeksi kalsium oleh dokter, jemur matahari pagi 30 menit. Kasus parah harus rontgen.",
+    bahaya: "Tinggi - bisa lumpuh permanen"
+  },
+  {
+    id: "crypto",
+    nama: "Crypto / Stick Tail",
+    hewan: "Leopard Gecko",
+    ciri: "Ekor menyusut jadi pensil, kurus padahal makan, muntah, pup encer berlendir",
+    penyebab: "Parasit Cryptosporidium, menular lewat pup",
+    pencegahan: "Karantina gecko baru 1 bulan, kandang bersih, jangan pakai jangkrik alam",
+    obatUmum: "Belum ada obat 100%. Supportive care: cairan elektrolit, jaga suhu 30°C, isolasi total. Wajib PCR ke dokter.",
+    bahaya: "Sangat Tinggi - Menular & Mematikan"
+  },
+  {
+    id: "ispa",
+    nama: "ISPA / Flu Reptil",
+    hewan: "Semua reptil, sering Kura air & Ball Python",
+    ciri: "Mangap terus, ngorok, lendir di hidung/mulut, kepala dongak, tidak mau makan",
+    penyebab: "Suhu terlalu dingin + kelembapan tinggi + kandang kotor",
+    pencegahan: "Suhu warm side 30-32°C, kandang jangan becek, sirkulasi udara bagus",
+    obatUmum: "Naikkan suhu 2-3°C, rendam air hangat, bersihkan lendir. Dokter biasanya kasih antibiotik (Baytril/Enrofloxacin).",
+    bahaya: "Tinggi - bisa jadi pneumonia"
+  },
+  {
+    id: "mouth-rot",
+    nama: "Stomatitis / Sariawan / Mouth Rot",
+    hewan: "Ular, Iguana, Kura-kura",
+    ciri: "Gusi bengkak merah, ada nanah kuning kayak keju di mulut, bau mulut, gak mau makan",
+    penyebab: "Luka di mulut + bakteri + stress + suhu dingin",
+    pencegahan: "Jangan kasih mangsa hidup yang bisa gigit balik, jaga kebersihan kandang",
+    obatUmum: "Bersihkan dengan betadine encer / chlorhexidine, oles antiseptik. Dokter kasih antibiotik injeksi.",
+    bahaya: "Sedang-Tinggi"
+  },
+  {
+    id: "shell-rot",
+    nama: "Shell Rot / Jamur Tempurung",
+    hewan: "Kura-kura air & darat (Sulcata)",
+    ciri: "Tempurung ada bercak putih/kuning/hitam lembek, bau busuk, mengelupas",
+    penyebab: "Air kotor, kandang lembab terus, luka tempurung",
+    pencegahan: "Ganti air tiap hari + filter, jemur kering 2-3 jam, alas jangan basah terus",
+    obatUmum: "Keringkan, sikat pakai betadine, oles salep antifungi (povidone iodine). Kasus parah butuh dokter kerok tempurung.",
+    bahaya: "Sedang"
+  },
+  {
+    id: "piramiding",
+    nama: "Piramiding",
+    hewan: "Sulcata, Kura darat",
+    ciri: "Tempurung tumbuh benjol-benjol kayak piramid, tidak mulus",
+    penyebab: "Kelembapan rendah + kurang rendam + protein kebanyakan + kurang kalsium",
+    pencegahan: "Kelembapan anakan 70-80%, rendam 3x seminggu, pakan 90% rumput",
+    obatUmum: "Tidak bisa disembuhkan (permanen), tapi bisa dihentikan dengan perbaiki perawatan. Kasih kalsium + kelembapan tinggi.",
+    bahaya: "Rendah tapi permanen"
+  },
+  {
+    id: "egg-binding",
+    nama: "Egg Binding / Telur Nyangkut",
+    hewan: "Semua betina (Leopard Gecko, Iguana, Kura)",
+    ciri: "Perut bengkak besar, gelisah gali-gali terus tapi gak nelur, lemes, tidak makan >2 minggu",
+    penyebab: "Kurang kalsium, kurang tempat bertelur, suhu dingin, obesitas",
+    pencegahan: "Sediakan kotak bertelur lembab (lay box), kalsium cukup, suhu pas",
+    obatUmum: "Rendam air hangat 30 menit, pijat perut pelan, kasih tempat gelap. Kalau 48 jam gak keluar, WAJIB dokter (butuh injeksi oksitosin / operasi).",
+    bahaya: "Sangat Tinggi - bisa mati"
+  },
+  {
+    id: "parasit-cacing",
+    nama: "Cacingan / Parasit Usus",
+    hewan: "Semua reptil",
+    ciri: "Makan banyak tapi kurus, pup bau menyengat + ada cacing, lemes",
+    penyebab: "Pakan alam (jangkrik liar), kandang kotor",
+    pencegahan: "Beli pakan ternak, bersihkan pup tiap hari, cuci tangan",
+    obatUmum: "Obat cacing reptil umum: Panacur (Fenbendazole). Tapi harus tes feses dulu ke dokter buat tau jenis cacingnya.",
+    bahaya: "Sedang"
+  },
+  {
+    id: "dysecdysis",
+    nama: "Gagal Ganti Kulit / Shed Stuck",
+    hewan: "Iguana, Leopard Gecko, Ular",
+    ciri: "Kulit mati nempel di jari, ekor, mata. Jari bisa putus kalau dibiarkan",
+    penyebab: "Kelembapan rendah, kurang minum, kurang vitamin A",
+    pencegahan: "Semprot kandang 2x sehari, sediakan humid hide, rendam",
+    obatUmum: "Rendam air hangat 15 menit, bantu kelupas pakai cotton bud basah. Jangan paksa tarik. Oles virgin coconut oil.",
+    bahaya: "Sedang - bisa putus jari/ekor"
+  },
+  {
+    id: "prolaps",
+    nama: "Prolaps Kloaka",
+    hewan: "Kura-Kura, Iguana, Gecko",
+    ciri: "Ada daging merah keluar dari anus / kloaka, tidak mau masuk lagi",
+    penyebab: "Sembelit, kurang kalsium, cacingan, telur nyangkut, dehidrasi",
+    pencegahan: "Rendam rutin, pakan berserat, kalsium cukup",
+    obatUmum: "DARURAT! Jaga tetap lembab pakai air gula / air madu, jangan didorong pakai tangan kotor. Langsung bawa ke dokter untuk dijahit balik.",
+    bahaya: "Sangat Tinggi - Darurat"
+  }
+]
+function tampilPenyakit(filterHewan = "semua") {
+  const list = document.getElementById("listPenyakit");
+  list.innerHTML = "";
+  const filtered = penyakitReptil.filter(p => filterHewan === "semua" || p.hewan.toLowerCase().includes(filterHewan.toLowerCase()));
+  
+  filtered.forEach((p, i) => {
+    list.innerHTML += `
+      <div class="animal-card" style="margin-bottom:12px">
+        <div style="padding:16px">
+          <div style="font-weight:700; font-size:16px; color:#1b3a2d">${p.nama}</div>
+          <div style="font-size:12px; color:#6b7a75; margin:4px 0 8px 0">${p.hewan}</div>
+          <div style="font-size:13px; line-height:1.4">Ciri: ${p.ciri}</div>
+          <div style="font-size:13px; color:#d32f2f; font-weight:600; margin-top:6px">Bahaya: ${p.bahaya}</div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px">
+            <span style="background:#f0f4f0; padding:4px 10px; border-radius:999px; font-size:11px">Sakit</span>
+            <button onclick="openPenyakitDetail(${i})" style="background:#173d30; color:white; border:0; padding:6px 14px; border-radius:999px; font-size:12px; font-weight:600">Detail</button>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+}
+
+function openPenyakitDetail(index) {
+  const p = penyakitReptil[index];
+  alert(`🩺 ${p.nama}\n\nHewan: ${p.hewan}\n\nCiri: ${p.ciri}\n\nBahaya: ${p.bahaya}\n\nOBAT UMUM:\n${p.obatUmum}\n\n---\nINI BUKAN RESEP! Wajib bawa ke dokter hewan reptil ya Mas.`);
+}
+
+  let activeCategory = "Semua";
+
+  function showPage(pageName) {
+    document.querySelectorAll(".page").forEach(page => page.classList.remove("active"));
+    const target = document.getElementById("page-" + pageName);
+    if (target) target.classList.add("active");
+
+    document.querySelectorAll(".nav-item").forEach(item => {
+      item.classList.toggle("active", item.dataset.page === pageName);
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+   if (pageName === "home" || pageName === "ensiklopedia") renderAnimals();
+if (pageName === "perawatan") renderPerawatan();
+  }
+
+  function filterCategory(category) {
+    activeCategory = category;
+    document.querySelectorAll("#page-ensiklopedia .category").forEach(item => {
+      item.classList.toggle("selected", item.dataset.cat === category);
+    });
+    showPage("ensiklopedia");
+  }
+function makeAnimalCard(animal) {
+  return `
+    <article class="animal-card">
+      <div class="animal-art" style="padding:0;overflow:hidden;height:130px;display:flex;align-items:center;justify-content:center;background:#e8f5e9"><img src="${animal.image}" alt="${animal.name}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='${animal.emoji}'"></div>
+      <div class="animal-info">
+        <h3>${animal.name}</h3>
+        <div class="latin">${animal.latin}</div>
+        <div class="animal-meta">
+          <span class="tag">${animal.category}</span>
+          <button onclick="openAnimal(${animal.id})" style="background:#1e3a2f;color:white;border:none;padding:4px 9px;border-radius:18px;font-size:10px;font-weight:600;">Detail</button>
+        </div>
+      </div>
+    </article>`;
+}
+  function bukaHewan(id) {
+  const animal = animals.find(item => item.id === id);
+  if (!animal) return;
+  openAnimal(id);
+}
+  function renderAnimals() {
+    const homeSearch = document.getElementById("searchInput")?.value.toLowerCase() || "";
+ 
+    const librarySearch = document.getElementById("librarySearch")?.value.toLowerCase() || "";
+    const homeList = animals.filter(animal =>  animal.name.toLowerCase().includes(homeSearch) ||  animal.category.toLowerCase().includes(homeSearch) ||  animal.latin.toLowerCase().includes(homeSearch)
+);
+    const libraryList = animals.filter(animal =>
+    (animal.name.toLowerCase().includes(librarySearch) || animal.category.toLowerCase().includes(librarySearch) || animal.latin.toLowerCase().includes(librarySearch)) &&
+      (activeCategory === "Semua" || animal.category === activeCategory)
+    );
+
+    document.getElementById("homeAnimals").innerHTML = homeList.length
+      ? homeList.slice(0, 4).map(makeAnimalCard).join("")
+      : '<div class="empty-result">Reptil tidak ditemukan. Coba kata kunci lain.</div>';
+
+    document.getElementById("libraryAnimals").innerHTML = libraryList.length
+      ? libraryList.map(makeAnimalCard).join("")
+      : '<div class="empty-result">Reptil tidak ditemukan. Coba kata kunci lain.</div>';
+  }
+let currentId = null;
+
+function getFavorit() {
+  try { return JSON.parse(localStorage.getItem("favorit")) || []; }
+  catch { return []; }
+}
+
+function toggleFavorit() {
+  let list = getFavorit();
+  list = list.includes(currentId)
+    ? list.filter(id => id !== currentId)
+    : [...list, currentId];
+  try { localStorage.setItem("favorit", JSON.stringify(list)); } catch {}
+  updateTombolFavorit();
+}
+
+function updateTombolFavorit() {
+  const btn = document.getElementById("btnFavorit");
+  if (!btn) return;
+  btn.textContent = getFavorit().includes(currentId)
+    ? " Tersimpan"
+    : " Simpan favorit";
+}
+  function openAnimal(id) {
+    const animal = animals.find(item => item.id === id);
+    if (!animal) return;
+    document.getElementById("animalDetail").innerHTML = `
+    <div class="detail-banner" style="padding:0;overflow:hidden;height:220px;display:flex;align-items:center;justify-content:center;background:#d8e8d8">
+      <img src="${animal.image}" alt="${animal.name}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'; this.parentElement.innerHTML='${animal.emoji}'">
+    </div>
+      <h1 class="page-title">${animal.name}</h1>
+      <p class="page-subtitle"><em>${animal.latin}</em> • ${animal.category}</p>
+      <div class="detail-actions">
+      <button id="btnFavorit" class="primary-btn" onclick="toggleFavorit()">Simpan favorit</button>
+        <button class="secondary-btn" onclick="openCatatModal(currentId)">+ Catat peliharaan</button>
+      </div>
+      <div class="info-card"><h3>Tentang spesies</h3><p>${animal.about}</p></div>
+<div class="info-card"><h3>Informasi perawatan</h3><p>${animal.perawatan}</p></div>
+<div class="info-card"><h3>Kondisi Kandang</h3><p>${animal.kandang}</p></div>
+<div class="info-card"><h3>Pakan</h3><p>${animal.pakan}</p></div>
+<div class="info-card"><h3>Hal yang perlu diperhatikan</h3><p>${animal.perhatian}</p></div>
+      <div class="notice"><strong>Jangan menebak kebutuhan hewan.</strong> Pastikan suhu, kelembapan, UVB, pakan, dan ukuran kandang diperiksa dari panduan khusus spesies atau dokter hewan reptil.</div>${window.isAdmin && animal.cloud ? '<div class="detail-actions"><button class="secondary-btn" onclick="editHewan('+animal.id+')">✏️ Edit hewan</button><button class="secondary-btn" style="color:#d32f2f" onclick="hapusHewan('+animal.id+')">🗑 Hapus</button></div>' : ''}`;
+      showPage("detail");
+currentId = animal.id;
+updateTombolFavorit();
+
+  }
+  
+
+const validPages = ["home", "ensiklopedia", "perawatan", "komunitas", "akun"];
+const startPage = location.hash.slice(1);
+if (validPages.includes(startPage)) showPage(startPage);
+</script>
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {getAuth,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,updateProfile} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import {getFirestore,collection,addDoc,query,orderBy,limit,onSnapshot,doc,updateDoc,deleteDoc,arrayUnion,arrayRemove,getDocs,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+// GANTI dengan config dari Firebase Console
+const firebaseConfig = {
+  apiKey: "AIzaSyDlcdAeCqeIf3FCYoDSGv4g3dnzo6-kkPA",
+  authDomain: "reptilku-ff6b0.firebaseapp.com",
+  projectId: "reptilku-ff6b0",
+  appId: "1:1085366860401:web:b02bff4cbc6231879679d0"
+};
+const app = initializeApp(firebaseConfig), auth = getAuth(app), db = getFirestore(app);
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pesan = e => ({'auth/invalid-credential':'Email atau kata sandi salah.','auth/email-already-in-use':'Email sudah terdaftar.','auth/weak-password':'Kata sandi minimal 6 karakter.','auth/invalid-email':'Format email tidak valid.'}[e.code] || 'Terjadi kesalahan: ' + e.code);
+let user = null, unsub = null, daftar = false;
+
+function ui(u) {
+  const n = document.querySelector('#page-akun .profile-head strong');
+  if (n) n.textContent = u ? (u.displayName || u.email) : 'Pengunjung ReptilKu';
+  $('akunLogout').style.display = u ? 'flex' : 'none';
+}
+window.komMode = () => {
+  daftar = !daftar;
+  $('kom-nama').style.display = daftar ? 'block' : 'none';
+  $('kom-btn').textContent = daftar ? 'Daftar' : 'Masuk';
+  $('kom-switch').textContent = daftar ? 'Sudah punya akun? Masuk' : 'Belum punya akun? Daftar';
+};
+window.komSubmit = async () => {
+  const e = $('kom-email').value.trim(), p = $('kom-pass').value;
+  try {
+    if (daftar) {
+      const nama = $('kom-nama').value.trim();
+      if (!nama) return alert('Isi nama tampilan dulu.');
+      const c = await createUserWithEmailAndPassword(auth, e, p);
+      await updateProfile(c.user, {displayName: nama});
+      ui(auth.currentUser);
+    } else await signInWithEmailAndPassword(auth, e, p);
+  } catch (x) { alert(pesan(x)); }
+};
+window.komLogout = () => signOut(auth);
+
+onAuthStateChanged(auth, u => {
+  ui(u);
+  cekAdmin(u);
+  user = u;
+  $('kom-auth').style.display = u ? 'none' : 'block';
+  $('kom-main').style.display = u ? 'block' : 'none';
+  ui(u);
+  if (unsub) { unsub(); unsub = null; }
+  if (u) mulaiFeed();
+});
+
+function mulaiFeed() {
+  unsub = onSnapshot(query(collection(db, 'posts'), orderBy('createdAt', 'desc'), limit(30)), s => {
+    $('kom-feed').innerHTML = s.empty ? '<div class="empty-result">Belum ada postingan. Jadilah yang pertama!</div>' : s.docs.map(d => {
+      const p = d.data(), id = d.id, likes = p.likes || [], me = likes.includes(user.uid);
+      const waktu = p.createdAt ? p.createdAt.toDate().toLocaleString('id-ID', {dateStyle:'medium', timeStyle:'short'}) : 'baru saja';
+      return `<div class="post"><div class="post-head"><div class="av">🦎</div><div><strong style="font-size:13px">${esc(p.name)}</strong><small>${waktu}</small></div>${p.uid === user.uid ? `<button onclick="komHapus('${id}')" style="margin-left:auto;border:0;background:transparent">🗑</button>` : ''}</div><p>${esc(p.text)}</p><div class="post-actions"><button class="${me ? 'on' : ''}" onclick="komLike('${id}',${me})">${me ? '❤️' : '🤍'} ${likes.length}</button><button onclick="komBuka('${id}')">💬 Komentar</button></div><div id="c-${id}"></div></div>`;
+    }).join('');
+  }, err => { $('kom-feed').innerHTML = '<div class="empty-result">Gagal memuat: ' + esc(err.code) + '</div>'; });
+}
+window.komPost = async () => {
+  const t = $('kom-text').value.trim();
+  if (!t) return;
+  await addDoc(collection(db, 'posts'), {uid: user.uid, name: user.displayName || 'Anggota', text: t.slice(0, 1000), likes: [], createdAt: serverTimestamp()});
+  $('kom-text').value = '';
+};
+window.komLike = (id, me) => updateDoc(doc(db, 'posts', id), {likes: me ? arrayRemove(user.uid) : arrayUnion(user.uid)});
+window.komHapus = id => confirm('Hapus postingan ini?') && deleteDoc(doc(db, 'posts', id));
+window.komBuka = async id => {
+  const box = $('c-' + id);
+  if (box.innerHTML) { box.innerHTML = ''; return; }
+  const s = await getDocs(query(collection(db, 'posts', id, 'comments'), orderBy('createdAt')));
+  box.innerHTML = s.docs.map(d => `<div class="cmt"><strong>${esc(d.data().name)}</strong> ${esc(d.data().text)}</div>`).join('') +
+    `<div style="display:flex;gap:6px;margin-top:8px"><input id="ci-${id}" class="kom-input" style="margin:0" placeholder="Tulis komentar..."><button class="primary-btn" onclick="komKomentar('${id}')">Kirim</button></div>`;
+};
+window.komKomentar = async id => {
+  const t = $('ci-' + id).value.trim();
+  if (!t) return;
+  await addDoc(collection(db, 'posts', id, 'comments'), {uid: user.uid, name: user.displayName || 'Anggota', text: t.slice(0, 500), createdAt: serverTimestamp()});
+  $('c-' + id).innerHTML = '';
+  komBuka(id);
+};
+
+// ===== ADMIN: TAMBAH / EDIT HEWAN =====
+const ADMIN_EMAIL = 'azister41@gmail.com';
+const EMOJI_KAT = {'Ular':'🐍','Kura-Kura':'🐢','Kadal':'🦎','Buaya':'🐊'};
+window.isAdmin = false;
+let hwEditId = null, hwFoto = '';
+const fmt = t => esc(t || '-').replace(/\n/g, '<br>');
+
+function cekAdmin(u) {
+  window.isAdmin = !!u && u.email === ADMIN_EMAIL;
+  $('btnTambahHewan').style.display = window.isAdmin ? 'block' : 'none';
+}
+
+// Hewan dari Firestore digabung ke daftar bawaan
+onSnapshot(query(collection(db, 'hewan'), orderBy('nid')), s => {
+  for (let i = animals.length - 1; i >= 0; i--) if (animals[i].cloud) animals.splice(i, 1);
+  s.docs.forEach(d => {
+    const h = d.data();
+    animals.push({
+      id: h.nid, docId: d.id, cloud: true, raw: h,
+      name: esc(h.name || ''), latin: esc(h.latin || ''), category: h.category || 'Kadal',
+      level: h.level || '', emoji: EMOJI_KAT[h.category] || '🦎', image: h.image || '',
+      about: fmt(h.about), perawatan: fmt(h.perawatan), kandang: fmt(h.kandang),
+      pakan: fmt(h.pakan), perhatian: fmt(h.perhatian)
+    });
+  });
+  renderAnimals();
+}, err => console.warn('Gagal memuat hewan:', err.code));
+
+// Kecilkan foto: maks 800 px, JPEG, di bawah ~300 KB
+function kecilkanFoto(file, maks = 800) {
+  return new Promise((ok, gagal) => {
+    const r = new FileReader();
+    r.onerror = () => gagal(new Error('Foto tidak bisa dibaca.'));
+    r.onload = () => {
+      const img = new Image();
+      img.onerror = () => gagal(new Error('File itu bukan gambar.'));
+      img.onload = () => {
+        const k = Math.min(1, maks / Math.max(img.width, img.height));
+        const c = document.createElement('canvas');
+        c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+        const g = c.getContext('2d');
+        g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
+        g.drawImage(img, 0, 0, c.width, c.height);
+        let q = 0.8, d = c.toDataURL('image/jpeg', q);
+        while (d.length > 400000 && q > 0.4) { q -= 0.1; d = c.toDataURL('image/jpeg', q); }
+        d.length > 400000 ? gagal(new Error('Foto terlalu besar, coba foto lain.')) : ok(d);
+      };
+      img.src = r.result;
+    };
+    r.readAsDataURL(file);
+  });
+}
+
+window.hwPilihFoto = async input => {
+  const f = input.files && input.files[0];
+  if (!f) return;
+  $('hwInfoFoto').textContent = 'Memproses foto...';
+  try {
+    hwFoto = await kecilkanFoto(f);
+    $('hwPreview').src = hwFoto; $('hwPreview').style.display = 'block';
+    $('hwInfoFoto').textContent = 'Foto siap (±' + Math.round(hwFoto.length * 0.75 / 1024) + ' KB).';
+  } catch (x) { hwFoto = ''; $('hwInfoFoto').textContent = x.message; }
+};
+
+function hwIsi(h) {
+  $('hwNama').value = h.name || ''; $('hwLatin').value = h.latin || '';
+  $('hwKategori').value = h.category || 'Ular'; $('hwLevel').value = h.level || 'Pemula';
+  $('hwAbout').value = h.about || ''; $('hwPerawatan').value = h.perawatan || '';
+  $('hwKandang').value = h.kandang || ''; $('hwPakan').value = h.pakan || ''; $('hwPerhatian').value = h.perhatian || '';
+  hwFoto = h.image || '';
+  $('hwPreview').src = hwFoto; $('hwPreview').style.display = hwFoto ? 'block' : 'none';
+  $('hwInfoFoto').textContent = hwFoto ? 'Foto lama dipakai. Pilih foto baru untuk menggantinya.' : '';
+  $('hwFoto').value = '';
+}
+
+window.openHewanModal = () => {
+  if (!window.isAdmin) return alert('Fitur ini hanya untuk admin.');
+  hwEditId = null; $('hwJudul').textContent = 'Tambah Hewan 🦎'; hwIsi({});
+  $('hewanModal').style.display = 'flex';
+};
+window.editHewan = id => {
+  const a = animals.find(x => x.id === id);
+  if (!window.isAdmin || !a || !a.cloud) return;
+  hwEditId = a.docId; $('hwJudul').textContent = 'Edit Hewan ✏️'; hwIsi(a.raw);
+  $('hewanModal').style.display = 'flex';
+};
+window.closeHewanModal = () => { $('hewanModal').style.display = 'none'; };
+
+window.simpanHewan = async () => {
+  if (!window.isAdmin) return alert('Fitur ini hanya untuk admin.');
+  const v = id => $(id).value.trim();
+  if (!v('hwNama')) return alert('Nama hewan wajib diisi.');
+  if (!hwFoto) return alert('Pilih foto dulu.');
+  const data = {
+    name: v('hwNama').slice(0, 80), latin: v('hwLatin').slice(0, 80),
+    category: $('hwKategori').value, level: $('hwLevel').value, image: hwFoto,
+    about: v('hwAbout').slice(0, 3000), perawatan: v('hwPerawatan').slice(0, 3000),
+    kandang: v('hwKandang').slice(0, 3000), pakan: v('hwPakan').slice(0, 3000),
+    perhatian: v('hwPerhatian').slice(0, 3000)
+  };
+  const btn = $('hwSimpan'); btn.disabled = true; btn.textContent = 'Menyimpan...';
+  try {
+    if (hwEditId) await updateDoc(doc(db, 'hewan', hwEditId), data);
+    else await addDoc(collection(db, 'hewan'), {...data, nid: Date.now(), createdAt: serverTimestamp()});
+    closeHewanModal();
+    alert('Hewan berhasil disimpan.');
+  } catch (x) {
+    alert(x.code === 'permission-denied'
+      ? 'Ditolak: akun ini bukan admin, atau Firestore Rules belum dipasang.'
+      : 'Gagal menyimpan: ' + (x.code || x.message));
+  }
+  btn.disabled = false; btn.textContent = 'Simpan';
+};
+
+window.hapusHewan = async id => {
+  const a = animals.find(x => x.id === id);
+  if (!window.isAdmin || !a || !a.cloud) return;
+  if (!confirm('Hapus "' + a.raw.name + '" dari aplikasi?')) return;
+  try { await deleteDoc(doc(db, 'hewan', a.docId)); showPage('ensiklopedia'); }
+  catch (x) { alert('Gagal menghapus: ' + (x.code || x.message)); }
+};
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));
+}
+
+</script>
+</body>
+</html>
