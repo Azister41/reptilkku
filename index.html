@@ -1065,24 +1065,11 @@ if ('serviceWorker' in navigator) {
 </div>
 
 <script>
-async function cariDokter() {
-  const modal = document.getElementById('modalDokter');
-  const status = document.getElementById('statusDokter');
-  const list = document.getElementById('listDokter');
-  modal.style.display = 'block';
-  status.innerText = '📡 Meminta izin lokasi...';
-  list.innerHTML = '<p style="text-align:center; padding:10px;">Mencari...</p>';
-
-  // Lokasi default Bergas-Kidul kalau GPS gagal
-  let lat = -7.309; 
-  let lon = 110.432;
-
-  async function tampilkanDokter(lat, lon, pakaiGPS) {
+async function tampilkanDokter(lat, lon, pakaiGPS) {
   const list = document.getElementById('listDokter');
   const status = document.getElementById('statusDokter');
-  status.style.display = 'none'; // biar tulisan dobel "Mencari lokasi kamu" hilang
+  if(status) status.style.display = 'none';
 
-  // Langsung tampil Google Maps, gak nunggu OpenStreetMap yang lagi error 502
   list.innerHTML = `
     <div style="background:white; border-radius:15px; padding:5px;">
       <p style="font-size:14px; color:#333; margin-bottom:12px; font-weight:500;">Yuk cari dokter hewan di sekitarmu:</p>
@@ -1095,6 +1082,7 @@ async function cariDokter() {
 async function cariDokter() {
   const modal = document.getElementById('modalDokter');
   const list = document.getElementById('listDokter');
+  if(!modal || !list) return;
   modal.style.display = 'block';
   list.innerHTML = '<p style="text-align:center; padding:20px;">📡 Mencari lokasi...</p>';
 
@@ -1123,9 +1111,9 @@ function hitungJarak(lat1, lon1, lat2, lon2) {
   let R = 6371;
   let dLat = (lat2-lat1)*Math.PI/180;
   let dLon = (lon2-lon1)*Math.PI/180;
-  let a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  let a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-} 
+}
 </script>
 </body>
 </html>
