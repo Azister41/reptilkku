@@ -116,6 +116,10 @@
     .profile-head { text-align: center; padding: 22px; background: var(--forest); color: white; border-radius: 20px; }
     .avatar { width: 66px; height: 66px; border-radius: 50%; background: #dce8d5; display: grid; place-items: center; margin: 0 auto 10px; font-size: 32px; }
     .profile-head p { color: #dce9df; font-size: 11px; margin-bottom: 0; }
+    .avatar { overflow: hidden; }
+.avatar img, .post-head .av img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.avatar.inisial { background: #2d6a4f; color: #fff; font-weight: 800; font-size: 30px; }
+.post-head .av { overflow: hidden; flex-shrink: 0; }
     .menu-row { width: 100%; display: flex; justify-content: space-between; padding: 15px 3px; border: 0; border-bottom: 1px solid var(--line); background: transparent; text-align: left; color: var(--ink); font-size: 13px; }
     .bottom-nav {
       position: fixed; z-index: 20; bottom: 0; left: 50%; transform: translateX(-50%);
@@ -289,7 +293,12 @@
     <section id="page-akun" class="page">
       <h1 class="page-title">Akun Saya</h1>
       <p class="page-subtitle">Kelola profil dan daftar reptil peliharaanmu.</p>
-      <div class="profile-head"><div class="avatar">👤</div><strong>Pengunjung ReptilKu</strong><p>Selamat datang di dunia reptil!</p></div>
+   <div class="profile-head">
+  <div class="avatar" id="akunAvatar">👤</div>
+  <strong>Pengunjung ReptilKu</strong>
+  <p id="akunBio">Selamat datang di dunia reptil!</p>
+  <button id="btnEditProfil" class="secondary-btn" style="display:none;margin-top:12px;padding:8px 16px" onclick="openProfilModal()">✏️ Ubah profil</button>
+</div>
       <div class="info-card" style="margin-top:16px">
         <button class="menu-row" onclick="alert('Fitur daftar reptil akan dibuat pada tahap berikutnya.')">🦎 &nbsp; Reptil peliharaan saya <span>›</span></button>
         <button class="menu-row" onclick="alert('Fitur favorit akan dibuat pada tahap berikutnya.')">❤ &nbsp; Spesies favorit <span>›</span></button>
@@ -350,6 +359,30 @@
     <div style="display:flex;gap:8px;margin-top:6px">
       <button id="hwSimpan" class="primary-btn" style="flex:1" onclick="simpanHewan()">Simpan</button>
       <button class="secondary-btn" onclick="closeHewanModal()">Batal</button>
+    </div>
+  </div>
+</div>
+<div id="profilModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:999;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fdfbf7;width:100%;max-width:380px;max-height:90vh;overflow:auto;border-radius:24px;padding:20px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <h3 style="margin:0">Ubah Profil ✏️</h3>
+      <button onclick="closeProfilModal()" style="border:none;background:#eee;width:30px;height:30px;border-radius:50%">✕</button>
+    </div>
+    <div style="text-align:center;margin-bottom:14px">
+      <div id="pfAvatar" class="avatar" style="width:88px;height:88px;margin:0 auto 10px;font-size:36px"></div>
+      <label class="secondary-btn" style="display:inline-block;cursor:pointer;padding:8px 14px">📷 Pilih foto
+        <input id="pfFile" type="file" accept="image/*" hidden onchange="pfPilihFoto(this)">
+      </label>
+      <button id="pfHapusFoto" class="secondary-btn" style="display:none;padding:8px 14px" onclick="pfHapusFoto()">Hapus foto</button>
+      <small id="pfInfo" style="display:block;color:var(--muted);font-size:11px;margin-top:6px"></small>
+    </div>
+    <label style="font-size:12px;font-weight:700">Nama tampilan</label>
+    <input id="pfNama" class="kom-input" maxlength="40" oninput="pfPreview()" style="margin-top:6px">
+    <label style="font-size:12px;font-weight:700">Bio singkat</label>
+    <textarea id="pfBio" class="kom-input" rows="2" maxlength="120" style="margin-top:6px"></textarea>
+    <div style="display:flex;gap:8px;margin-top:6px">
+      <button id="pfSimpan" class="primary-btn" style="flex:1" onclick="simpanProfil()">Simpan</button>
+      <button class="secondary-btn" onclick="closeProfilModal()">Batal</button>
     </div>
   </div>
 </div>
@@ -795,7 +828,7 @@ if (validPages.includes(startPage)) showPage(startPage);
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import {getAuth,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,updateProfile} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import {getFirestore,collection,addDoc,query,orderBy,limit,onSnapshot,doc,updateDoc,deleteDoc,arrayUnion,arrayRemove,getDocs,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import {getFirestore,collection,addDoc,query,orderBy,limit,onSnapshot,doc,updateDoc,deleteDoc,arrayUnion,arrayRemove,getDocs,getDoc,setDoc,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 // GANTI dengan config dari Firebase Console
 const firebaseConfig = {
   apiKey: "AIzaSyDlcdAeCqeIf3FCYoDSGv4g3dnzo6-kkPA",
@@ -834,9 +867,134 @@ window.komSubmit = async () => {
 };
 window.komLogout = () => signOut(auth);
 
+let profil = {}, pfFoto = '';
+const profCache = {};
+const inisial = n => (String(n || '?').trim()[0] || '?').toUpperCase();
+const okFoto = f => typeof f === 'string' && f.startsWith('data:image/') && f.length < 200000;
+
+// ambil data profil dari Firestore (dengan cache)
+async function ambilProfil(uid) {
+  if (profCache[uid]) return profCache[uid];
+  try {
+    const sn = await getDoc(doc(db, 'users', uid));
+    return (profCache[uid] = sn.exists() ? sn.data() : {});
+  } catch (e) { return {}; }
+}
+
+// tampilkan profil di halaman Akun
+function renderAkun(u) {
+  const av = $('akunAvatar'), bio = $('akunBio'), btn = $('btnEditProfil');
+  if (!u) {
+    av.className = 'avatar'; av.textContent = '👤'; av.onclick = null; av.style.cursor = '';
+    bio.textContent = 'Selamat datang di dunia reptil!'; btn.style.display = 'none';
+    return;
+  }
+  const ada = okFoto(profil.photo);
+  av.className = 'avatar' + (ada ? '' : ' inisial');
+  av.innerHTML = ada ? `<img src="${esc(profil.photo)}" alt="">` : esc(inisial(u.displayName || u.email));
+  av.onclick = window.openProfilModal; av.style.cursor = 'pointer';
+  bio.textContent = profil.bio || 'Selamat datang di dunia reptil!';
+  btn.style.display = 'inline-block';
+}
+
+async function muatProfil(u) {
+  if (!u) { profil = {}; renderAkun(null); return; }
+  delete profCache[u.uid];
+  profil = await ambilProfil(u.uid);
+  if (auth.currentUser && auth.currentUser.uid === u.uid) renderAkun(u);
+}
+
+// foto profil di feed komunitas
+async function isiAvatarFeed() {
+  const els = [...document.querySelectorAll('#kom-feed .av[data-uid]')];
+  await Promise.all([...new Set(els.map(e => e.dataset.uid))].map(ambilProfil));
+  els.forEach(e => {
+    const p = profCache[e.dataset.uid];
+    if (p && okFoto(p.photo)) e.innerHTML = `<img src="${esc(p.photo)}" alt="">`;
+  });
+}
+
+// potong persegi dari tengah, kecilkan jadi 256 px
+function kecilkanAvatar(file, sisi = 256) {
+  return new Promise((ok, gagal) => {
+    const r = new FileReader();
+    r.onerror = () => gagal(new Error('Foto tidak bisa dibaca.'));
+    r.onload = () => {
+      const img = new Image();
+      img.onerror = () => gagal(new Error('File itu bukan gambar.'));
+      img.onload = () => {
+        const m = Math.min(img.width, img.height);
+        const c = document.createElement('canvas'); c.width = c.height = sisi;
+        const g = c.getContext('2d');
+        g.fillStyle = '#fff'; g.fillRect(0, 0, sisi, sisi);
+        g.drawImage(img, (img.width - m) / 2, (img.height - m) / 2, m, m, 0, 0, sisi, sisi);
+        let q = 0.85, d = c.toDataURL('image/jpeg', q);
+        while (d.length > 120000 && q > 0.4) { q -= 0.1; d = c.toDataURL('image/jpeg', q); }
+        d.length > 120000 ? gagal(new Error('Foto terlalu besar, coba foto lain.')) : ok(d);
+      };
+      img.src = r.result;
+    };
+    r.readAsDataURL(file);
+  });
+}
+
+window.pfPreview = () => {
+  const a = $('pfAvatar');
+  a.className = 'avatar' + (pfFoto ? '' : ' inisial');
+  a.innerHTML = pfFoto ? `<img src="${esc(pfFoto)}" alt="">` : esc(inisial($('pfNama').value || (user && (user.displayName || user.email))));
+  $('pfHapusFoto').style.display = pfFoto ? 'inline-block' : 'none';
+};
+
+window.pfPilihFoto = async input => {
+  const f = input.files && input.files[0];
+  if (!f) return;
+  $('pfInfo').textContent = 'Memproses foto...';
+  try {
+    pfFoto = await kecilkanAvatar(f);
+    $('pfInfo').textContent = 'Foto siap (±' + Math.round(pfFoto.length * 0.75 / 1024) + ' KB). Tekan Simpan.';
+    pfPreview();
+  } catch (x) { $('pfInfo').textContent = x.message; }
+  input.value = '';
+};
+
+window.pfHapusFoto = () => { pfFoto = ''; $('pfInfo').textContent = 'Foto akan dihapus saat disimpan.'; pfPreview(); };
+
+window.openProfilModal = () => {
+  if (!auth.currentUser) return alert('Masuk dulu lewat menu Komunitas.');
+  pfFoto = okFoto(profil.photo) ? profil.photo : '';
+  $('pfNama').value = auth.currentUser.displayName || '';
+  $('pfBio').value = profil.bio || '';
+  $('pfInfo').textContent = '';
+  pfPreview();
+  $('profilModal').style.display = 'flex';
+};
+
+window.closeProfilModal = () => { $('profilModal').style.display = 'none'; };
+
+window.simpanProfil = async () => {
+  const u = auth.currentUser;
+  if (!u) return;
+  const nama = $('pfNama').value.trim().slice(0, 40), bio = $('pfBio').value.trim().slice(0, 120);
+  if (!nama) return alert('Nama tampilan tidak boleh kosong.');
+  const btn = $('pfSimpan'); btn.disabled = true; btn.textContent = 'Menyimpan...';
+  try {
+    await setDoc(doc(db, 'users', u.uid), {name: nama, bio, photo: pfFoto, updatedAt: serverTimestamp()}, {merge: true});
+    if (nama !== u.displayName) await updateProfile(u, {displayName: nama});
+    profil = profCache[u.uid] = {name: nama, bio, photo: pfFoto};
+    ui(u); renderAkun(u); isiAvatarFeed();
+    closeProfilModal();
+  } catch (x) {
+    alert(x.code === 'permission-denied'
+      ? 'Ditolak: Firestore Rules untuk koleksi "users" belum dipasang.'
+      : 'Gagal menyimpan: ' + (x.code || x.message));
+  }
+  btn.disabled = false; btn.textContent = 'Simpan';
+};
+
 onAuthStateChanged(auth, u => {
   ui(u);
   cekAdmin(u);
+  muatProfil(u);
   user = u;
   $('kom-auth').style.display = u ? 'none' : 'block';
   $('kom-main').style.display = u ? 'block' : 'none';
@@ -850,8 +1008,9 @@ function mulaiFeed() {
     $('kom-feed').innerHTML = s.empty ? '<div class="empty-result">Belum ada postingan. Jadilah yang pertama!</div>' : s.docs.map(d => {
       const p = d.data(), id = d.id, likes = p.likes || [], me = likes.includes(user.uid);
       const waktu = p.createdAt ? p.createdAt.toDate().toLocaleString('id-ID', {dateStyle:'medium', timeStyle:'short'}) : 'baru saja';
-      return `<div class="post"><div class="post-head"><div class="av">🦎</div><div><strong style="font-size:13px">${esc(p.name)}</strong><small>${waktu}</small></div>${p.uid === user.uid ? `<button onclick="komHapus('${id}')" style="margin-left:auto;border:0;background:transparent">🗑</button>` : ''}</div><p>${esc(p.text)}</p><div class="post-actions"><button class="${me ? 'on' : ''}" onclick="komLike('${id}',${me})">${me ? '❤️' : '🤍'} ${likes.length}</button><button onclick="komBuka('${id}')">💬 Komentar</button></div><div id="c-${id}"></div></div>`;
+      return `<div class="post"><div class="post-head"><div class="av" data-uid="${esc(p.uid)}">🦎</div><div><strong style="font-size:13px">${esc(p.name)}</strong><small>${waktu}</small></div>${p.uid === user.uid ? `<button onclick="komHapus('${id}')" style="margin-left:auto;border:0;background:transparent">🗑</button>` : ''}</div><p>${esc(p.text)}</p><div class="post-actions"><button class="${me ? 'on' : ''}" onclick="komLike('${id}',${me})">${me ? '❤️' : '🤍'} ${likes.length}</button><button onclick="komBuka('${id}')">💬 Komentar</button></div><div id="c-${id}"></div></div>`;
     }).join('');
+    isiAvatarFeed();
   }, err => { $('kom-feed').innerHTML = '<div class="empty-result">Gagal memuat: ' + esc(err.code) + '</div>'; });
 }
 window.komPost = async () => {
