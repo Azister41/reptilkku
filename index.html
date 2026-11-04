@@ -305,6 +305,8 @@
         <button class="menu-row" onclick="showPage('pengaturan')" style="width:100%; text-align:left; background:none; border:none; padding:14px 0; border-bottom:1px solid #eee; display:flex; align-items:center; gap:10px; cursor:pointer; font-size:15px"><span>⚙️</span> Pengaturan <span style="margin-left:auto">›</span></button>
         <button id="akunLogout" class="menu-row" style="display:none" onclick="komLogout()">🚪 &nbsp; Keluar <span>›</span></button>
         <button class="menu-row" onclick="alert('ReptilKu versi awal 1.0')">ⓘ &nbsp; Tentang ReptilKu <span>›</span></button>
+        <div id="btn-admin" onclick="showPage('admin'); hitungAnggota()" style="margin-top:16px; background:#16372E; color:white; padding:14px; border-radius:14px; text-align:center; font-weight:700; cursor:pointer; display:none">
+      👑 Dashboard Admin - Lihat Anggota
       </div>
     </section>
     <section id="page-admin" class="page" style="display:none">
@@ -1493,6 +1495,32 @@ function hitungJarak(lat1, lon1, lat2, lon2) {
   let a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
+</script>
+
+<script>
+  firebase.auth().onAuthStateChanged(user => {
+    if(user && user.email === 'azister41@gmail.com'){
+      document.getElementById('btn-admin').style.display = 'block';
+    } else {
+      console.log("Bukan admin:", user?.email);
+    }
+  });
+
+  async function hitungAnggota(){
+    try {
+      const snap = await firebase.firestore().collection('users').get();
+      document.getElementById('total-anggota').innerText = snap.size;
+      document.getElementById('anggota-baru-count').innerText = snap.size;
+      let html = "";
+      snap.forEach(d => {
+        const email = d.data().email || d.id;
+        html += `<div style="padding:8px 0; border-bottom:1px solid #eee"><b>${email}</b></div>`;
+      });
+      document.getElementById('list-anggota-baru').innerHTML = html || "Belum ada users";
+    } catch(e){
+      alert(e.message);
+    }
+  }
 </script>
 </body>
 </html>
