@@ -309,7 +309,7 @@
       👑 Dashboard Admin - Lihat Anggota
       </div>
     </section>
-    <section id="page-admin" class="page">
+    <section id="page-admin" class="page" style="display:none">
   <div style="padding:20px">
     <h2>Dashboard Admin 👑</h2>
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:16px 0">
@@ -333,7 +333,7 @@
     <h1 class="page-title">Spesies Favorit</h1>
     <p class="page-subtitle">Koleksi reptil favoritmu</p>
     <div id="list-favorit" class="animal-grid" style="margin-top:16px"></div>
-    <button onclick="showPage('akun')" style="margin-top:20px; background:#16372E; color:white; padding:8px 18px; border-radius:20px; border:none; font-weight:600; cursor:pointer">← Kembali</button>
+    <button onclick="showPage('akun')" style="background:#173d30; color:white; padding:8px 14px; border-radius:20px; font-size:13px; white-space:nowrap; cursor:pointer; font-weight:600; line-height:1;">Kembali</button>
   </section>
        <section id="page-pengaturan" class="page">
     <h1 class="page-title">Pengaturan</h1>
@@ -1075,9 +1075,6 @@ function ui(u) {
   const n = document.querySelector('#page-akun .profile-head strong');
   if (n) n.textContent = u ? (u.displayName || u.email) : 'Pengunjung ReptilKu';
   $('akunLogout').style.display = u ? 'flex' : 'none';
-  let em = document.getElementById('akunEmail');
-  if (!em && n) { em = document.createElement('div'); em.id = 'akunEmail'; em.style.cssText = 'font-size:11px;color:#888;margin-top:2px'; n.after(em); }
-  if (em) em.textContent = u ? (u.email || '') : '';
 }
 window.komMode = () => {
   daftar = !daftar;
@@ -1093,7 +1090,6 @@ window.komSubmit = async () => {
       if (!nama) return alert('Isi nama tampilan dulu.');
       const c = await createUserWithEmailAndPassword(auth, e, p);
       await updateProfile(c.user, {displayName: nama});
-      try { await setDoc(doc(db, 'users', c.user.uid), {name: nama, email: e, createdAt: serverTimestamp()}, {merge: true}); } catch {}
       ui(auth.currentUser);
     } else await signInWithEmailAndPassword(auth, e, p);
   } catch (x) { alert(pesan(x)); }
@@ -1224,24 +1220,7 @@ window.simpanProfil = async () => {
   btn.disabled = false; btn.textContent = 'Simpan';
 };
 
-// Pastikan tiap akun punya dokumen users/{uid} (email + createdAt) agar tercatat di dashboard admin
-async function pastikanDokUser(u) {
-  try {
-    const ref = doc(db, 'users', u.uid);
-    const sn = await getDoc(ref);
-    const d = sn.exists() ? sn.data() : {};
-    if (d.email && d.createdAt) return;
-    const dibuat = u.metadata && u.metadata.creationTime ? new Date(u.metadata.creationTime) : new Date();
-    await setDoc(ref, {
-      name: d.name || u.displayName || (u.email || 'anggota').split('@')[0],
-      email: u.email || '',
-      createdAt: d.createdAt || dibuat
-    }, {merge: true});
-  } catch (e) { console.warn('Gagal membuat dokumen user:', e); }
-}
-
 onAuthStateChanged(auth, u => {
-  if (u) pastikanDokUser(u);
   ui(u);
   cekAdmin(u);
   muatProfil(u);
@@ -1294,34 +1273,9 @@ let hwEditId = null, hwFoto = '';
 const fmt = t => esc(t || '-').replace(/\n/g, '<br>');
 
 function cekAdmin(u) {
-  window.isAdmin = !!u && (u.email || '').trim().toLowerCase() === ADMIN_EMAIL.toLowerCase();
+  window.isAdmin = !!u && u.email === ADMIN_EMAIL;
   $('btnTambahHewan').style.display = window.isAdmin ? 'block' : 'none';
-  const ba = document.getElementById('btn-admin');
-  if (ba) ba.style.display = window.isAdmin ? 'block' : 'none';
 }
-
-// Dashboard admin: hitung & daftar anggota dari koleksi 'users'
-window.hitungAnggota = async () => {
-  if (!window.isAdmin) { alert('Login dulu sebagai admin.'); return; }
-  try {
-    const sn = await getDocs(collection(db, 'users'));
-    const hariIni = new Date().toDateString();
-    let baru = 0, html = '';
-    sn.forEach(d => {
-      const x = d.data();
-      const tgl = x.createdAt && x.createdAt.toDate ? x.createdAt.toDate() : null;
-      if (tgl && tgl.toDateString() === hariIni) baru++;
-      const jadiAdmin = (x.email || '').trim().toLowerCase() === ADMIN_EMAIL.toLowerCase();
-      html += '<div style="padding:12px 0;border-bottom:1px solid #eee;display:flex;justify-content:space-between">'
-        + '<div><b>' + esc(x.name || x.email || 'Tanpa nama') + '</b><br>'
-        + '<span style="font-size:11px;color:#888">' + esc(x.email || '-') + (tgl ? ' | ' + tgl.toLocaleDateString('id-ID') : '') + '</span></div>'
-        + '<span style="font-size:10px;background:#16372E;color:white;padding:4px 8px;border-radius:10px;height:fit-content">' + (jadiAdmin ? 'Admin' : 'Member') + '</span></div>';
-    });
-    document.getElementById('total-anggota').innerText = sn.size;
-    document.getElementById('anggota-baru-count').innerText = baru;
-    document.getElementById('list-anggota-baru').innerHTML = html || 'Belum ada anggota.';
-  } catch (e) { alert('Gagal memuat anggota: ' + e.message); }
-};
 
 // Hewan dari Firestore digabung ke daftar bawaan
 onSnapshot(query(collection(db, 'hewan'), orderBy('nid')), s => {
