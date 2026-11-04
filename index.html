@@ -1498,28 +1498,34 @@ function hitungJarak(lat1, lon1, lat2, lon2) {
 </script>
 
 <script>
+  // INI SATPAM NYA - CUMA ADMIN YANG BOLEH LIHAT
   firebase.auth().onAuthStateChanged(user => {
-    if(user && user.email === 'azister41@gmail.com'){
-      document.getElementById('btn-admin').style.display = 'block';
+    const btnAdmin = document.getElementById('btn-admin');
+    if (!btnAdmin) return;
+
+    if (user && user.email === 'azister41@gmail.com') {
+      // Kalau yang login kamu, munculkan
+      btnAdmin.style.display = 'block';
+      console.log("Halo Admin! Tombol dashboard dimunculkan");
     } else {
-      console.log("Bukan admin:", user?.email);
+      // Kalau member biasa, sembunyikan
+      btnAdmin.style.display = 'none';
+      console.log("Member biasa, tombol admin disembunyikan");
     }
   });
 
+  // Fungsi hitung anggota
   async function hitungAnggota(){
-    try {
+    try{
       const snap = await firebase.firestore().collection('users').get();
       document.getElementById('total-anggota').innerText = snap.size;
       document.getElementById('anggota-baru-count').innerText = snap.size;
       let html = "";
-      snap.forEach(d => {
-        const email = d.data().email || d.id;
-        html += `<div style="padding:8px 0; border-bottom:1px solid #eee"><b>${email}</b></div>`;
+      snap.forEach(doc => {
+        html += `<div style="padding:8px 0; border-bottom:1px solid #eee"><b>${doc.data().email || doc.id}</b></div>`;
       });
-      document.getElementById('list-anggota-baru').innerHTML = html || "Belum ada users";
-    } catch(e){
-      alert(e.message);
-    }
+      document.getElementById('list-anggota-baru').innerHTML = html;
+    }catch(e){ alert(e.message); }
   }
 </script>
 </body>
