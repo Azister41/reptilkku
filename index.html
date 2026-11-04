@@ -301,12 +301,75 @@
 </div>
       <div class="info-card" style="margin-top:16px">
         <button class="menu-row" onclick="showPage('chat')">💬 &nbsp; Chat Anggota</button>
-        <button class="menu-row" onclick="alert('Fitur favorit akan dibuat pada tahap berikutnya.')">❤ &nbsp; Spesies favorit <span>›</span></button>
-        <button class="menu-row" onclick="alert('Pengaturan akun akan dibuat setelah database tersedia.')">⚙️ &nbsp; Pengaturan <span>›</span></button>
+        <button class="menu-row" onclick="showPage('favorit')">❤️ &nbsp; Spesies favorit <span></span></button>
+        <button class="menu-row" onclick="showPage('pengaturan')" style="width:100%; text-align:left; background:none; border:none; padding:14px 0; border-bottom:1px solid #eee; display:flex; align-items:center; gap:10px; cursor:pointer; font-size:15px"><span>⚙️</span> Pengaturan <span style="margin-left:auto">›</span></button>
         <button id="akunLogout" class="menu-row" style="display:none" onclick="komLogout()">🚪 &nbsp; Keluar <span>›</span></button>
         <button class="menu-row" onclick="alert('ReptilKu versi awal 1.0')">ⓘ &nbsp; Tentang ReptilKu <span>›</span></button>
       </div>
-    </section>   
+    </section>
+      <section id="page-favorit" class="page">
+    <h1 class="page-title">Spesies Favorit</h1>
+    <p class="page-subtitle">Koleksi reptil favoritmu</p>
+    <div id="list-favorit" class="animal-grid" style="margin-top:16px"></div>
+    <button onclick="showPage('akun')" style="margin-top:20px; background:#16372E; color:white; padding:8px 18px; border-radius:20px; border:none; font-weight:600; cursor:pointer">← Kembali</button>
+  </section>
+       <section id="page-pengaturan" class="page">
+    <h1 class="page-title">Pengaturan</h1>
+    <p class="page-subtitle">Kelola aplikasi ReptilKu</p>
+    
+    <div style="background:white; border-radius:16px; padding:16px; margin-top:16px">
+      <div style="display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid #eee">
+        <span>Hapus semua favorit</span>
+        <button onclick="hapusSemuaFavorit()" style="background:#ffe9e9; color:#b91c1c; border:none; padding:6px 12px; border-radius:12px; font-weight:600">Hapus</button>
+      </div>
+      <div style="display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid #eee">
+        <span>Versi Aplikasi</span>
+        <span style="color:#888">v1.0.0</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid #eee">
+  <span>Cache Foto</span>
+        <button onclick="localStorage.clear(); alert('Cache dibersihkan!')" style="background:#e9f5ee; color:#16372E; border:none; padding:6px 12px; border-radius:12px; font-weight:600">Bersihkan</button>
+      </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 0;">
+        <span>Support Me</span>
+        <button onclick="tampilkanQris()" style="background:#16372E; color:white; border:none; padding:6px 14px; border-radius:12px; font-weight:600; cursor:pointer">Dukung</button>  
+      </div>
+            <div style="border-top:1px solid #eee; margin-top:8px; padding-top:16px">
+        <p style="font-weight:700; color:#16372E; margin-bottom:10px; font-size:14px">Hubungi Saya</p>
+        
+        <a href="mailto:EMAIL_KAMU@gmail.com" style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; text-decoration:none; color:#333">
+          <span>Email</span>
+          <span style="color:#888; font-size:13px">azister41@gmail.com</span>
+        </a>
+        
+        <a href="https://wa.me/6289515307900?text=Halo%20kak%20dari%20ReptilKu" target="_blank" style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; text-decoration:none; color:#333">
+          <span>WhatsApp</span>
+          <span style="color:#25D366; font-size:13px; font-weight:600">Chat</span>
+        </a>
+
+        <a href="https://instagram.com/mz_azis41" target="_blank" style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; text-decoration:none; color:#333">
+          <span>Instagram</span>
+          <span style="color:#888; font-size:13px">Mas Azis</span>
+        </a>
+      
+    </div>
+
+    <button onclick="showPage('akun')" style="margin-top:20px; background:#16372E; color:white; padding:8px 18px; border-radius:20px; border:none; font-weight:600; cursor:pointer">← Kembali ke Akun</button>
+  </section>
+    <div id="modal-qris" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:99999; justify-content:center; align-items:center; padding:20px" onclick="tutupQris()">
+    <div style="background:white; padding:20px; border-radius:20px; max-width:340px; width:100%; text-align:center" onclick="event.stopPropagation()">
+      <h3 style="margin:0 0 8px 0; color:#16372E">Dukung ReptilKu</h3>
+      <p style="font-size:13px; color:#666; margin-bottom:14px">Terima kasih sudah support! Scan QRIS di bawah:</p>
+      
+      <div style="background:#f5f5f5; padding:12px; border-radius:16px">
+        <img id="img-qris" src="https://i.postimg.cc/7ZZcPcWt/1793770521-picsay.png" alt="QRIS" style="width:100%; border-radius:12px; display:block">
+      </div>
+
+      <p style="margin-top:12px; font-size:12px; color:#999">Salam Hangat dari Mas Azis</p>
+      
+      <button onclick="tutupQris()" style="margin-top:16px; background:#16372E; color:white; padding:10px 22px; border-radius:20px; border:none; font-weight:700; width:100%; cursor:pointer">Tutup</button>
+    </div>
+  </div>
     <section id="page-chat" class="page">
   <h1 class="page-title">Chat Anggota</h1>
   <p class="page-subtitle">Ngobrol bareng pecinta reptil</p>
@@ -729,15 +792,32 @@ function openPenyakitDetail(index) {
     document.querySelectorAll(".page").forEach(page => page.classList.remove("active"));
     const target = document.getElementById("page-" + pageName);
     if (target) target.classList.add("active");
-
-    document.querySelectorAll(".nav-item").forEach(item => {
-      item.classList.toggle("active", item.dataset.page === pageName);
+    
+        document.querySelectorAll(".nav-item").forEach(item => {
+        item.classList.toggle("active", item.dataset.page === pageName);
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
-   if (pageName === "home" || pageName === "ensiklopedia") renderAnimals();
-if (pageName === "perawatan") renderPerawatan();
+    if (pageName === "home" || pageName === "ensiklopedia") renderAnimals();
+    if (pageName === "perawatan") renderPerawatan();
+    if (pageName === "akun" || pageName === "favorit") tampilkanHalamanFavorit();
   }
 
+  function hapusSemuaFavorit(){
+    if(confirm("Yakin mau hapus semua spesies favorit?")){
+      localStorage.setItem("reptilku_fav", JSON.stringify([]));
+      tampilkanHalamanFavorit();
+      alert("Semua favorit dihapus!");
+      showPage('akun');
+    }
+  }
+
+  function tampilkanQris(){
+    document.getElementById('modal-qris').style.display='flex';
+  }
+
+  function tutupQris(){
+    document.getElementById('modal-qris').style.display='none';
+  }
   function filterCategory(category) {
     activeCategory = category;
     document.querySelectorAll("#page-ensiklopedia .category").forEach(item => {
@@ -805,6 +885,18 @@ function updateTombolFavorit() {
   btn.textContent = getFavorit().includes(currentId)
     ? " Tersimpan"
     : " Simpan favorit";
+}
+function tampilkanHalamanFavorit(){
+  const favIds = getFavorit();
+  const favAnimals = animals.filter(a => favIds.includes(a.id));
+  const container = document.getElementById("list-favorit"); // ini yang di halaman Akun
+  if(!container) return;
+  
+  if(favAnimals.length === 0){
+    container.innerHTML = '<div class="empty-result">Belum ada favorit. Klik ❤️ di detail hewan!</div>';
+  } else {
+    container.innerHTML = favAnimals.map(makeAnimalCard).join("");
+  }
 }
   function openAnimal(id) {
     const animal = animals.find(item => item.id === id);
