@@ -307,6 +307,26 @@
         <button class="menu-row" onclick="alert('ReptilKu versi awal 1.0')">ⓘ &nbsp; Tentang ReptilKu <span>›</span></button>
       </div>
     </section>
+    <section id="page-admin" class="page" style="display:none">
+  <div style="padding:20px">
+    <h2>Dashboard Admin 👑</h2>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:16px 0">
+      <div style="background:white; padding:16px; border-radius:16px; text-align:center">
+        <h1 id="total-anggota" style="margin:0; color:#16372E">0</h1>
+        <small>Total Anggota</small>
+      </div>
+      <div style="background:#16372E; color:white; padding:16px; border-radius:16px; text-align:center">
+        <h1 id="anggota-baru-count" style="margin:0">0</h1>
+        <small>Baru Hari Ini</small>
+      </div>
+    </div>
+    <div style="background:white; padding:16px; border-radius:16px">
+      <h4>List Anggota</h4>
+      <div id="list-anggota-baru">Loading...</div>
+    </div>
+    <button onclick="showPage('akun')" style="margin-top:20px">← Kembali</button>
+  </div>
+</section>
       <section id="page-favorit" class="page">
     <h1 class="page-title">Spesies Favorit</h1>
     <p class="page-subtitle">Koleksi reptil favoritmu</p>
@@ -507,6 +527,74 @@
   </div>
 </div>
 <script>
+    
+  // === FUNGSI HITUNG ANGGOTA UNTUK ADMIN ===
+async function hitungAnggota() {
+  if (!firebase.auth().currentUser) {
+    alert("Login dulu sebagai admin mas!");
+    return;
+  }
+
+  // Cek apakah yang login admin
+  const email = firebase.auth().currentUser.email;
+  if (email !== 'azister41@gmail.com') {
+    alert("Kamu bukan admin!");
+    return;
+  }
+
+  try {
+    const snapshot = await db.collection('users').get();
+    const total = snapshot.size;
+    
+    // Tampilkan di halaman
+    document.getElementById('total-anggota').innerText = total;
+    
+    // Tampilkan list anggota terbaru
+    let html = "";
+    let baruHariIni = 0;
+    const today = new Date().toDateString();
+
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      const tgl = data.createdAt ? data.createdAt.toDate() : new Date();
+      if(tgl.toDateString() === today) baruHariIni++;
+
+      html += `
+        <div style="padding:12px 0; border-bottom:1px solid #eee; display:flex; justify-content:space-between">
+          <div>
+            <b>${data.email || '-'}</b><br>
+            <span style="font-size:11px; color:#888">UID: ${doc.id.substring(0,8)}... | ${tgl.toLocaleDateString('id-ID')}</span>
+          </div>
+          <span style="font-size:10px; background:#16372E; color:white; padding:4px 8px; border-radius:10px; height:fit-content">Member</span>
+        </div>
+      `;
+    });
+
+    document.getElementById('list-anggota-baru').innerHTML = html;
+    document.getElementById('anggota-baru-count').innerText = baruHariIni;
+
+    console.log("Total anggota:", total);
+  } catch (e) {
+    console.error(e);
+    alert("Gagal hitung anggota: " + e.message + "\nPastikan sudah Publish Rules tadi!");
+  }
+}
+
+// Biar badge notif muncul otomatis di menu Akun
+firebase.auth().onAuthStateChanged(user => {
+  if(user && user.email === 'azister41@gmail.com'){
+    // Munculkan tombol Dashboard Admin
+    const akunPage = document.getElementById('page-akun');
+    if(akunPage && !document.getElementById('btn-admin')){
+      akunPage.innerHTML += `
+        <div id="btn-admin" onclick="showPage('admin'); hitungAnggota()" style="background:#16372E; color:white; padding:14px; border-radius:14px; margin-top:16px; text-align:center; font-weight:700">
+          👑 Dashboard Admin - Lihat Anggota
+        </div>
+      `;
+    }
+  }
+});
+    
 // FAVORIT SYSTEM
 let favorites = JSON.parse(localStorage.getItem('reptilku_fav') || '[]');
 function toggleFavorite(id) {
