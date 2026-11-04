@@ -1224,7 +1224,24 @@ window.simpanProfil = async () => {
   btn.disabled = false; btn.textContent = 'Simpan';
 };
 
+// Pastikan tiap akun punya dokumen users/{uid} (email + createdAt) agar tercatat di dashboard admin
+async function pastikanDokUser(u) {
+  try {
+    const ref = doc(db, 'users', u.uid);
+    const sn = await getDoc(ref);
+    const d = sn.exists() ? sn.data() : {};
+    if (d.email && d.createdAt) return;
+    const dibuat = u.metadata && u.metadata.creationTime ? new Date(u.metadata.creationTime) : new Date();
+    await setDoc(ref, {
+      name: d.name || u.displayName || (u.email || 'anggota').split('@')[0],
+      email: u.email || '',
+      createdAt: d.createdAt || dibuat
+    }, {merge: true});
+  } catch (e) { console.warn('Gagal membuat dokumen user:', e); }
+}
+
 onAuthStateChanged(auth, u => {
+  if (u) pastikanDokUser(u);
   ui(u);
   cekAdmin(u);
   muatProfil(u);
@@ -1294,10 +1311,11 @@ window.hitungAnggota = async () => {
       const x = d.data();
       const tgl = x.createdAt && x.createdAt.toDate ? x.createdAt.toDate() : null;
       if (tgl && tgl.toDateString() === hariIni) baru++;
+      const jadiAdmin = (x.email || '').trim().toLowerCase() === ADMIN_EMAIL.toLowerCase();
       html += '<div style="padding:12px 0;border-bottom:1px solid #eee;display:flex;justify-content:space-between">'
         + '<div><b>' + esc(x.name || x.email || 'Tanpa nama') + '</b><br>'
         + '<span style="font-size:11px;color:#888">' + esc(x.email || '-') + (tgl ? ' | ' + tgl.toLocaleDateString('id-ID') : '') + '</span></div>'
-        + '<span style="font-size:10px;background:#16372E;color:white;padding:4px 8px;border-radius:10px;height:fit-content">Member</span></div>';
+        + '<span style="font-size:10px;background:#16372E;color:white;padding:4px 8px;border-radius:10px;height:fit-content">' + (jadiAdmin ? 'Admin' : 'Member') + '</span></div>';
     });
     document.getElementById('total-anggota').innerText = sn.size;
     document.getElementById('anggota-baru-count').innerText = baru;
