@@ -540,7 +540,7 @@ async function hitungAnggota() {
   // Cek apakah yang login admin
   const email = firebase.auth().currentUser.email;
   if (email !== 'azister41@gmail.com') {
-    alert("Kamu bukan admin!");
+    alert("Kamu admin!");
     return;
   }
 
@@ -1498,34 +1498,65 @@ function hitungJarak(lat1, lon1, lat2, lon2) {
 </script>
 
 <script>
-  // INI SATPAM NYA - CUMA ADMIN YANG BOLEH LIHAT
-  firebase.auth().onAuthStateChanged(user => {
+  // === SATPAM VERSI PAKSA MUNCUL ===
+  function cekDanTampilkanAdmin() {
+    const user = firebase.auth().currentUser;
     const btnAdmin = document.getElementById('btn-admin');
+    console.log("CEK ADMIN - User:", user ? user.email : "null", "Btn:", btnAdmin);
     if (!btnAdmin) return;
-
-    if (user && user.email === 'azister41@gmail.com') {
-      // Kalau yang login kamu, munculkan
+    
+    if (user && user.email.toLowerCase() === 'azister41@gmail.com') {
       btnAdmin.style.display = 'block';
-      console.log("Halo Admin! Tombol dashboard dimunculkan");
-    } else {
-      // Kalau member biasa, sembunyikan
-      btnAdmin.style.display = 'none';
-      console.log("Member biasa, tombol admin disembunyikan");
+      btnAdmin.style.setProperty('display', 'block', 'important');
+    } else if (user) {
+      // Jika login tapi bukan admin, tetap sembunyi
+      // btnAdmin.style.display = 'none';
     }
+  }
+
+  firebase.auth().onAuthStateChanged(user => {
+    console.log("Auth berubah:", user ? user.email : "logout");
+    setTimeout(cekDanTampilkanAdmin, 500);
+    setTimeout(cekDanTampilkanAdmin, 2000);
   });
 
-  // Fungsi hitung anggota
-  async function hitungAnggota(){
-    try{
-      const snap = await firebase.firestore().collection('users').get();
-      document.getElementById('total-anggota').innerText = snap.size;
-      document.getElementById('anggota-baru-count').innerText = snap.size;
+  // === FUNGSI HITUNG ANGGOTA ===
+  async function hitungAnggota() {
+    cekDanTampilkanAdmin(); // cek lagi pas klik dashboard
+    if (!firebase.auth().currentUser) {
+      alert("Login dulu sebagai admin mas!");
+      return;
+    }
+    try {
+      const snapshot = await firebase.firestore().collection('users').get();
+      const total = snapshot.size;
+      const elTotal = document.getElementById('total-anggota');
+      if(elTotal) elTotal.innerText = total;
+      
+      const countEl = document.getElementById('anggota-baru-count');
+      if(countEl) countEl.innerText = total;
+
       let html = "";
-      snap.forEach(doc => {
-        html += `<div style="padding:8px 0; border-bottom:1px solid #eee"><b>${doc.data().email || doc.id}</b></div>`;
+      let baruHariIni = 0;
+      const today = new Date().toDateString();
+
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const tgl = data.createdAt ? data.createdAt.toDate() : new Date();
+        if(tgl.toDateString() === today) baruHariIni++;
+        html += `
+          <div style="padding:12px 0; border-bottom:1px solid #eee; display:flex; justify-content:space-between">
+            <div><b>${data.email || '-'}</b><br>
+            <span style="font-size:11px; color:#888">UID: ${doc.id.substring(0,8)}... | ${tgl.toLocaleDateString('id-ID')}</span></div>
+            <span style="font-size:10px; background:#16372E; color:white; padding:4px 8px; border-radius:10px; height:fit-content">Member</span>
+          </div>`;
       });
+      
       document.getElementById('list-anggota-baru').innerHTML = html;
-    }catch(e){ alert(e.message); }
+      const baruEl = document.getElementById('baru-hari-ini');
+      if(baruEl) baruEl.innerText = baruHariIni;
+
+    } catch(e) { alert("Error: " + e.message); console.log(e); }
   }
 </script>
 </body>
