@@ -309,7 +309,7 @@
       👑 Dashboard Admin - Lihat Anggota
       </div>
     </section>
-    <section id="page-admin" class="page" style="display:none">
+    <section id="page-admin" class="page">
   <div style="padding:20px">
     <h2>Dashboard Admin 👑</h2>
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:16px 0">
@@ -1075,6 +1075,9 @@ function ui(u) {
   const n = document.querySelector('#page-akun .profile-head strong');
   if (n) n.textContent = u ? (u.displayName || u.email) : 'Pengunjung ReptilKu';
   $('akunLogout').style.display = u ? 'flex' : 'none';
+  let em = document.getElementById('akunEmail');
+  if (!em && n) { em = document.createElement('div'); em.id = 'akunEmail'; em.style.cssText = 'font-size:11px;color:#888;margin-top:2px'; n.after(em); }
+  if (em) em.textContent = u ? (u.email || '') : '';
 }
 window.komMode = () => {
   daftar = !daftar;
@@ -1090,6 +1093,7 @@ window.komSubmit = async () => {
       if (!nama) return alert('Isi nama tampilan dulu.');
       const c = await createUserWithEmailAndPassword(auth, e, p);
       await updateProfile(c.user, {displayName: nama});
+      try { await setDoc(doc(db, 'users', c.user.uid), {name: nama, email: e, createdAt: serverTimestamp()}, {merge: true}); } catch {}
       ui(auth.currentUser);
     } else await signInWithEmailAndPassword(auth, e, p);
   } catch (x) { alert(pesan(x)); }
@@ -1273,9 +1277,33 @@ let hwEditId = null, hwFoto = '';
 const fmt = t => esc(t || '-').replace(/\n/g, '<br>');
 
 function cekAdmin(u) {
-  window.isAdmin = !!u && u.email === ADMIN_EMAIL;
+  window.isAdmin = !!u && (u.email || '').trim().toLowerCase() === ADMIN_EMAIL.toLowerCase();
   $('btnTambahHewan').style.display = window.isAdmin ? 'block' : 'none';
+  const ba = document.getElementById('btn-admin');
+  if (ba) ba.style.display = window.isAdmin ? 'block' : 'none';
 }
+
+// Dashboard admin: hitung & daftar anggota dari koleksi 'users'
+window.hitungAnggota = async () => {
+  if (!window.isAdmin) { alert('Login dulu sebagai admin.'); return; }
+  try {
+    const sn = await getDocs(collection(db, 'users'));
+    const hariIni = new Date().toDateString();
+    let baru = 0, html = '';
+    sn.forEach(d => {
+      const x = d.data();
+      const tgl = x.createdAt && x.createdAt.toDate ? x.createdAt.toDate() : null;
+      if (tgl && tgl.toDateString() === hariIni) baru++;
+      html += '<div style="padding:12px 0;border-bottom:1px solid #eee;display:flex;justify-content:space-between">'
+        + '<div><b>' + esc(x.name || x.email || 'Tanpa nama') + '</b><br>'
+        + '<span style="font-size:11px;color:#888">' + esc(x.email || '-') + (tgl ? ' | ' + tgl.toLocaleDateString('id-ID') : '') + '</span></div>'
+        + '<span style="font-size:10px;background:#16372E;color:white;padding:4px 8px;border-radius:10px;height:fit-content">Member</span></div>';
+    });
+    document.getElementById('total-anggota').innerText = sn.size;
+    document.getElementById('anggota-baru-count').innerText = baru;
+    document.getElementById('list-anggota-baru').innerHTML = html || 'Belum ada anggota.';
+  } catch (e) { alert('Gagal memuat anggota: ' + e.message); }
+};
 
 // Hewan dari Firestore digabung ke daftar bawaan
 onSnapshot(query(collection(db, 'hewan'), orderBy('nid')), s => {
