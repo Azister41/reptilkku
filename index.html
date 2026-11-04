@@ -583,7 +583,7 @@ async function hitungAnggota() {
 }
 
 // Biar badge notif muncul otomatis di menu Akun
-firebase.auth().onAuthStateChanged(user => {
+if (typeof firebase !== 'undefined') firebase.auth().onAuthStateChanged(user => {
   if(user && user.email === 'azister41@gmail.com'){
     // Munculkan tombol Dashboard Admin
     const akunPage = document.getElementById('page-akun');
@@ -917,14 +917,14 @@ function openPenyakitDetail(index) {
   }
 function makeAnimalCard(animal) {
   return `
-    <article class="animal-card">
+    <article class="animal-card" onclick="openAnimal(${animal.id})" style="cursor:pointer;-webkit-tap-highlight-color:transparent">
       <div class="animal-art" style="padding:0;overflow:hidden;height:130px;display:flex;align-items:center;justify-content:center;background:#e8f5e9"><img src="${animal.image}" alt="${animal.name}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='${animal.emoji}'"></div>
       <div class="animal-info">
         <h3>${animal.name}</h3>
         <div class="latin">${animal.latin}</div>
         <div class="animal-meta">
           <span class="tag">${animal.category}</span>
-          <button onclick="openAnimal(${animal.id})" style="background:#1e3a2f;color:white;border:none;padding:4px 9px;border-radius:18px;font-size:10px;font-weight:600;">Detail</button>
+          <button onclick="event.stopPropagation();openAnimal(${animal.id})" style="background:#1e3a2f;color:white;border:none;padding:7px 12px;border-radius:18px;font-size:11px;font-weight:600;">Detail</button>
         </div>
       </div>
     </article>`;
@@ -1514,7 +1514,7 @@ function hitungJarak(lat1, lon1, lat2, lon2) {
     }
   }
 
-  firebase.auth().onAuthStateChanged(user => {
+  if (typeof firebase !== 'undefined') firebase.auth().onAuthStateChanged(user => {
     console.log("Auth berubah:", user ? user.email : "logout");
     setTimeout(cekDanTampilkanAdmin, 500);
     setTimeout(cekDanTampilkanAdmin, 2000);
