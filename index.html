@@ -306,28 +306,35 @@
         <button id="akunLogout" class="menu-row" style="display:none" onclick="komLogout()">🚪 &nbsp; Keluar <span>›</span></button>
         <button class="menu-row" onclick="alert('ReptilKu versi awal 1.0')">ⓘ &nbsp; Tentang ReptilKu <span>›</span></button>
         <div id="btn-admin" onclick="showPage('admin'); hitungAnggota()" style="margin-top:16px; background:#16372E; color:white; padding:14px; border-radius:14px; text-align:center; font-weight:700; cursor:pointer; display:none">
-      👑 Dashboard Admin - Lihat Anggota
+     Dashboard Admin - Lihat Anggota
       </div>
     </section>
     <section id="page-admin" class="page">
-  <div style="padding:20px">
-    <h2>Dashboard Admin 👑</h2>
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:16px 0">
-      <div style="background:white; padding:16px; border-radius:16px; text-align:center">
-        <h1 id="total-anggota" style="margin:0; color:#16372E">0</h1>
-        <small>Total Anggota</small>
-      </div>
-      <div style="background:#16372E; color:white; padding:16px; border-radius:16px; text-align:center">
-        <h1 id="anggota-baru-count" style="margin:0">0</h1>
-        <small>Baru Hari Ini</small>
-      </div>
+<div style="padding:20px; max-width:600px; margin:0 auto;">
+
+  <h2 style="font-size:28px; margin-bottom:16px;">Dashboard Admin</h2>
+  
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:16px 0">
+    <div style="background:white; padding:16px; border-radius:16px; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,0.05)">
+      <h1 id="total-anggota" style="margin:0; color:#16372E; font-size:36px">0</h1>
+      <small style="color:#666">Total Anggota</small>
     </div>
-    <div style="background:white; padding:16px; border-radius:16px">
-      <h4>List Anggota</h4>
-      <div id="list-anggota-baru">Loading...</div>
+    <div style="background:#16372E; color:white; padding:16px; border-radius:16px; text-align:center;">
+      <h1 id="anggota-baru-count" style="margin:0; font-size:36px">0</h1>
+      <small>Baru Hari Ini</small>
     </div>
-    <button onclick="showPage('akun')" style="margin-top:20px">← Kembali</button>
   </div>
+
+  <div style="background:white; padding:16px; border-radius:16px; box-shadow:0 2px 8px rgba(0,0,0,0.05)">
+    <h4 style="margin:0 0 12px 0">List Anggota</h4>
+    <div id="list-anggota-baru">Loading...</div>
+  </div>
+
+  <button onclick="showPage('akun')" style="margin-top:20px; background:#16372E; color:white; padding:10px 20px; border-radius:20px; border:none; font-weight:600; cursor:pointer; font-size:14px;">
+    ← Kembali
+  </button>
+
+</div>
 </section>
       <section id="page-favorit" class="page">
     <h1 class="page-title">Spesies Favorit</h1>
