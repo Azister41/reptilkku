@@ -1050,16 +1050,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig), auth = getAuth(app), db = getFirestore(app);
 const $ = id => document.getElementById(id);
 
-// FUNGSI KIRIM NOTIF - panggil ini tiap ada aksi
-async function kirimNotif(toUid, fromNama, type, pesan, postId = "") {
-  if (toUid === auth.currentUser?.uid) return; // jangan notif diri sendiri
-  await addDoc(collection(db, "notifications"), {
-    toUid, fromNama, type, pesan, postId,
-    dibaca: false,
-    createdAt: serverTimestamp()
-  });
-}
-
 // DENGERIN NOTIF REALTIME
 function listenNotif() {
   const user = auth.currentUser;
@@ -1092,6 +1082,42 @@ function listenNotif() {
 function bukaNotif() {
   const p = document.getElementById('panel-notif');
   p.style.display = p.style.display === 'none' ? 'block' : 'none';
+}
+
+// TAMBAHIN INI - BIAR AUTO TUTUP
+document.addEventListener('click', function(e){
+  const panel = document.getElementById('panel-notif');
+  if(!panel) return;
+  // Kalau yang diklik BUKAN panel & BUKAN lonceng, tutup!
+  if(!e.target.closest('#panel-notif') && !e.target.closest('[onclick="bukaNotif()"]')){
+    panel.style.display = 'none';
+  }
+});
+
+// Kalau di-scroll juga tutup
+window.addEventListener('scroll', function(){
+  const panel = document.getElementById('panel-notif');
+  if(panel) panel.style.display = 'none';
+}, true);
+
+// FUNGSI KIRIM NOTIF - TEMPEL DI SINI
+async function kirimNotif(toUid, tipe, pesan, postId){
+  try{
+    const user = auth.currentUser;
+    if(!user || !toUid || toUid === user.uid) return; // Jangan kirim ke diri sendiri
+
+    await addDoc(collection(db, "notifications"), {
+      toUid: toUid,
+      fromUid: user.uid,
+      fromNama: user.displayName || user.email?.split('@')[0] || "Seseorang",
+      tipe: tipe, // 'like' atau 'komentar'
+      pesan: pesan,
+      postId: postId || "",
+      dibaca: false,
+      createdAt: serverTimestamp()
+    });
+    console.log("Notif terkirim ke", toUid);
+  }catch(e){ console.log("Gagal kirim notif:", e); }
 }
 
 async function bacaNotif(id) {
@@ -1343,7 +1369,17 @@ window.komPost = async () => {
   await addDoc(collection(db, 'posts'), {uid: user.uid, name: user.displayName || 'Anggota', text: t.slice(0, 1000), likes: [], createdAt: serverTimestamp()});
   $('kom-text').value = '';
 };
-window.komLike = (id, me) => updateDoc(doc(db, 'posts', id), {likes: me ? arrayRemove(user.uid) : arrayUnion(user.uid)});
+window.komLike = async (id, me) => {
+  await updateDoc(doc(db, 'posts', id),
+  {likes: me ? arrayRemove(user.uid) : arrayUnion(user.uid)});
+  // KIRIM NOTIF KALO BARU NGE-LIKE (BUKAN UNLIKE)
+  if(!me){
+    const snap = await getDoc(doc(db, 'posts', id));
+    if(snap.exists()){
+      kirimNotif(snap.data().uid, 'like', 'menyukai postinganmu', id);
+    }
+  }
+};
 window.komHapus = id => confirm('Hapus postingan ini?') && deleteDoc(doc(db, 'posts', id));
 window.komBuka = async id => {
   const box = $('c-' + id);
@@ -1358,6 +1394,11 @@ window.komKomentar = async id => {
   await addDoc(collection(db, 'posts', id, 'comments'), {uid: user.uid, name: user.displayName || 'Anggota', text: t.slice(0, 500), createdAt: serverTimestamp()});
   $('c-' + id).innerHTML = '';
   komBuka(id);
+  // KIRIM NOTIF KOMEN
+  const snap = await getDoc(doc(db, 'posts', id));
+  if(snap.exists()){
+    kirimNotif(snap.data().uid, 'comment', 'mengomentari: ' + t.slice(0, 50), id);
+  }
 };
 
 // ===== ADMIN: TAMBAH / EDIT HEWAN =====
