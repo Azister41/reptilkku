@@ -1063,7 +1063,7 @@ function listenNotif() {
       const n = d.data();
       if (!n.dibaca) belumDibaca++;
       const icon = n.type === 'like' ? '❤️' : n.type === 'comment' ? '💬' : '📩';
-      html += `<div onclick="bacaNotif('${d.id}')" style="padding:10px; background:${n.dibaca ? 'white' : '#e8f5e9'}; border-radius:12px; margin-bottom:6px; cursor:pointer;">
+      html += `<div onclick="klikNotif('${n.postId}','${d.id}')" style="padding:10px; background:${n.dibaca ? 'white' : '#e8f5e9'}; border-radius:12px; margin-bottom:6px; cursor:pointer;">
         ${icon} <b>${n.fromNama}</b> ${n.pesan}
       </div>`;
     });
@@ -1083,6 +1083,20 @@ function bukaNotif() {
   const p = document.getElementById('panel-notif');
   p.style.display = p.style.display === 'none' ? 'block' : 'none';
 }
+
+window.klikNotif = async (postId, notifId) => {
+  document.getElementById('panel-notif').style.display = 'none';
+  if(notifId && window.bacaNotif) bacaNotif(notifId);
+  if(window.showPage) showPage('komunitas');
+  setTimeout(() => {
+    const el = document.getElementById('post-' + postId);
+    if(el){
+      el.scrollIntoView({behavior:'smooth', block:'center'});
+      el.style.outline = '2px solid #1e3a2f';
+      setTimeout(()=> el.style.outline='none', 2000);
+    }
+  }, 600);
+};
 
 // TAMBAHIN INI - BIAR AUTO TUTUP
 document.addEventListener('click', function(e){
