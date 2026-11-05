@@ -189,7 +189,13 @@
   🔔
   <span id="badge-notif" style="display:none; position:absolute; top:-5px; right:-5px; background:red; color:white; font-size:10px; padding:2px 6px; border-radius:50%;">0</span>
 </div>
-<div id="panel-notif" style="display:none; position:absolute; top:60px; right:16px; width:300px; background:white; border-radius:16px; box-shadow:0 4px 20px rgba(0,0,0,0.15); padding:12px; z-index:99;"></div>
+<div id="panel-notif" style="display:none; position:fixed; top:70px; right:12px; left:12px; background:white; color:black; border-radius:16px; padding:16px; box-shadow:0 10px 30px rgba(0,0,0,0.25); z-index:9999; font-size:14px; text-align:center;">
+  <div style="text-align:center; padding:20px 0; color:#888;">
+    <div style="font-size:32px;">🔔</div>
+    <div style="margin-top:8px;">Belum ada notif</div>
+    <div style="font-size:12px; margin-top:4px;">Notifikasi like & komentar bakal muncul di sini</div>
+  </div>
+</div>
     <button class="icon-button" onclick="showPage('akun')" aria-label="Buka akun" style="background:transparent; border:none; box-shadow:none;">
   <img src="https://i.postimg.cc/rFPtZYBV/1793676613731.png" style="width:26px; height:26px;">
 </button>
@@ -1071,7 +1077,7 @@ function listenNotif() {
         ${icon} <b>${n.fromNama}</b> ${n.pesan}
       </div>`;
     });
-    document.getElementById('panel-notif').innerHTML = html || "Belum ada notif";
+    document.getElementById('panel-notif').innerHTML = html || `<div style="text-align:center; padding:20px 0; color:#888;"><div style="font-size:32px;">🔔</div><div style="margin-top:8px;">Belum ada notif</div></div>`;
     
     const badge = document.getElementById('badge-notif');
     if (belumDibaca > 0) {
