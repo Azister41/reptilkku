@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pakan & Nutrisi - ReptilKu</title>
+<style>
+:root{--g9:#173d2d;--g7:#24563f;--g5:#4a7c59;--cream:#f3f1ea;--card:#fffefa;--ink:#1b2b22;--mute:#6b766e;--line:#e3e0d4;--warn:#a63d2f;--warnbg:#fbeeea}
+*{box-sizing:border-box;margin:0}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--cream);color:var(--ink);line-height:1.5;padding-bottom:40px}
+header{background:var(--g9);color:#fff;padding:calc(14px + env(safe-area-inset-top,0px)) 18px 22px}
+.back{display:inline-flex;align-items:center;gap:6px;color:#cfe3d6;text-decoration:none;font-size:14px;padding:6px 0}
+h1{font-size:26px;line-height:1.2;margin-top:8px}
+header p{color:#cfe3d6;font-size:14px;margin-top:4px;max-width:34ch}
+main{padding:0 16px}
+.search{margin-top:-18px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:0 14px;display:flex;align-items:center;gap:8px;box-shadow:0 4px 14px rgba(23,61,45,.1)}
+.search input{flex:1;border:0;background:none;font:inherit;padding:14px 0;outline:none;color:var(--ink)}
+.cats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:18px 0}
+.cat{border:1px solid var(--line);background:var(--card);border-radius:14px;padding:10px 4px;font:inherit;font-size:13px;color:var(--ink);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px}
+.cat span{font-size:24px}
+.cat[aria-selected=true]{background:var(--g9);color:#fff;border-color:var(--g9)}
+.cat:focus-visible,summary:focus-visible,.back:focus-visible{outline:3px solid var(--g5);outline-offset:2px}
+.note{font-size:13px;color:var(--mute);background:#ebe8db;border-radius:12px;padding:10px 12px;margin-bottom:16px}
+h2{font-size:21px;color:var(--g9)}
+.sub{color:var(--mute);font-size:14px;margin:2px 0 14px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.stat{background:var(--g7);color:#fff;border-radius:16px;padding:12px 14px}
+.stat small{color:#cfe3d6;font-size:12px;display:block}
+.stat b{font-size:15px;line-height:1.3;display:block;margin-top:2px}
+details{background:var(--card);border:1px solid var(--line);border-radius:16px;margin-bottom:10px;overflow:hidden}
+summary{cursor:pointer;list-style:none;padding:14px 16px;font-weight:600;color:var(--g9);display:flex;justify-content:space-between;align-items:center}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";font-size:20px;color:var(--g5)}
+details[open] summary::after{content:"\2212"}
+.body{padding:0 16px 14px;font-size:14.5px}
+.body ul{padding-left:18px}
+.body li{margin:4px 0}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--mute);font-weight:600;font-size:13px}
+details.warn{background:var(--warnbg);border-color:#efcfc8}
+details.warn summary{color:var(--warn)}
+details.warn summary::after{color:var(--warn)}
+.src{font-size:12.5px;color:var(--mute);margin-top:14px}
+.empty{text-align:center;color:var(--mute);padding:24px 0}
+@media (prefers-reduced-motion:no-preference){.view{animation:in .25s ease}@keyframes in{from{opacity:0}to{opacity:1}}}
+</style>
+</head>
+<body>
+<header>
+  <a class="back" href="index.html">&larr; Kembali ke Beranda</a>
+  <h1>Pakan &amp; Nutrisi</h1>
+  <p>Apa yang boleh dimakan reptilmu, seberapa sering, dan apa yang harus dihindari.</p>
+</header>
+<main>
+  <label class="search">
+    <span aria-hidden="true">&#8981;</span>
+    <input id="q" type="search" placeholder="Cari pakan, mis. jangkrik, mencit, rumput..." aria-label="Cari pakan">
+  </label>
+  <div class="cats" id="cats" role="tablist"></div>
+  <p class="note">Panduan umum. Kebutuhan tiap spesies bisa berbeda, konsultasikan ke dokter hewan untuk kasus spesifik.</p>
+  <section id="view" class="view" aria-live="polite"></section>
+</main>
+
+<script>
+const DATA = {
+  ular: {
+    nama: "Ular", ikon: "\u{1F40D}", tipe: "Karnivora",
+    ringkas: [["Tipe makan", "Karnivora, mangsa utuh"], ["Frekuensi umum", "Anakan lebih sering, dewasa lebih jarang"]],
+    pakan: ["Mencit (pinky, fuzzy, hopper, dewasa)", "Tikus sesuai ukuran ular", "Anakan ayam (DOC)", "Kadal atau katak kecil untuk spesies tertentu"],
+    frek: [["Anakan", "Sekitar 5\u20137 hari sekali"], ["Dewasa", "Sekitar 10\u201314 hari sekali"], ["Catatan", "Beda tiap spesies, ular arboreal kecil sering lebih rapat"]],
+    porsi: "Ukuran mangsa kira-kira sama dengan bagian tubuh ular yang paling tebal.",
+    suplemen: "Umumnya tidak perlu bila mangsa diberikan utuh (tulang dan organ ikut termakan).",
+    terlarang: ["Mangsa lebih besar dari bagian tubuh ular yang paling tebal", "Mangsa liar (risiko parasit dan racun)", "Memberi makan saat mata keruh menjelang ganti kulit", "Memegang ular 2 hari setelah makan, bisa memicu muntah"],
+    tanda: ["Muntah atau regurgitasi", "Obesitas, tubuh menggelambir", "Menolak makan berminggu-minggu"],
+    sumber: "Merck Veterinary Manual (Exotic Animals), ARAV"
+  },
+  kura: {
+    nama: "Kura-Kura", ikon: "\u{1F422}", tipe: "Herbivora (mis. sulcata)",
+    ringkas: [["Tipe makan", "Herbivora, tinggi serat"], ["Frekuensi umum", "Anakan tiap hari, dewasa tiap hari atau hampir tiap hari"]],
+    pakan: ["Rumput dan hay (rumput kering) sebagai menu utama", "Daun hijau: dandelion, hibiscus, murbei", "Bunga hibiscus dan kaktus pir (opuntia)", "Sayuran hijau bervariasi"],
+    frek: [["Anakan", "Setiap hari"], ["Dewasa", "Setiap hari atau 5\u20136 kali seminggu"], ["Catatan", "Porsi menyesuaikan ukuran, serat harus selalu tersedia"]],
+    porsi: "Sediakan sebanyak yang habis dalam sekali makan, sisa dibersihkan. Buah hanya sesekali dan sangat sedikit.",
+    suplemen: "Kalsium (tanpa D3) ditaburkan beberapa kali seminggu, tulang sotong bisa disediakan. Lampu UVB penting agar kalsium terserap.",
+    terlarang: ["Buah berlebihan (terlalu banyak gula)", "Bayam dan kubis berlebihan", "Pakan anjing/kucing dan protein hewani", "Rumput berpestisida"],
+    tanda: ["Tempurung menonjol seperti piramida", "Tempurung lunak atau retak", "Diare atau kotoran sangat encer"],
+    sumber: "Merck Veterinary Manual, ARAV, Reptifiles"
+  },
+  kadal: {
+    nama: "Kadal", ikon: "\u{1F98E}", tipe: "Beda tiap spesies",
+    ringkas: [["Tipe makan", "Herbivora, insektivora, atau omnivora"], ["Frekuensi umum", "Anakan harian, dewasa tiap 2\u20133 hari (insektivora)"]],
+    pakan: ["Iguana (herbivora): daun hijau, bunga, sayuran", "Leopard gecko (insektivora): jangkrik, dubia, ulat jerman", "Bearded dragon (omnivora): serangga dan sayuran", "Ulat hongkong hanya sebagai camilan"],
+    frek: [["Anakan", "Setiap hari"], ["Dewasa", "Sekitar 2\u20133 hari sekali (insektivora)"], ["Iguana", "Sayuran segar setiap hari"]],
+    porsi: "Serangga tidak lebih besar dari jarak antara dua mata. Beri sebanyak yang habis dalam 10\u201315 menit.",
+    suplemen: "Taburi kalsium pada serangga, multivitamin sesekali. Beri makan serangga dengan sayur bergizi (gut-loading) sebelum diberikan.",
+    terlarang: ["Serangga tangkapan liar (parasit, pestisida)", "Kunang-kunang (beracun)", "Serangga terlalu besar", "Buah berlebihan untuk iguana"],
+    tanda: ["Rahang atau kaki lunak dan lemah (MBD)", "Ekor terlalu gemuk atau kurus", "Menolak makan atau lemas"],
+    sumber: "Merck Veterinary Manual, ARAV, Reptifiles"
+  },
+  buaya: {
+    nama: "Buaya", ikon: "\u{1F40A}", tipe: "Karnivora",
+    ringkas: [["Tipe makan", "Karnivora, ikan dan daging utuh"], ["Frekuensi umum", "Anakan lebih sering, dewasa seminggu sekali atau kurang"]],
+    pakan: ["Ikan segar atau beku yang sudah dicairkan", "Ayam utuh", "Tikus atau mencit", "Udang dan serangga besar untuk anakan"],
+    frek: [["Anakan", "Sekitar 2\u20133 kali seminggu"], ["Dewasa", "Sekitar seminggu sekali atau lebih jarang"], ["Catatan", "Sesuaikan dengan suhu dan kondisi tubuh"]],
+    porsi: "Porsi kecil dan utuh, sesuaikan ukuran dan umur. Hindari memberi berlebihan agar tidak obesitas.",
+    suplemen: "Pakan utuh (dengan tulang) biasanya sudah mencukupi, tanyakan dokter hewan untuk suplemen.",
+    terlarang: ["Daging olahan atau berlemak tinggi", "Pakan basi atau berbau", "Memberi makan dengan tangan kosong", "Memelihara tanpa izin, buaya termasuk satwa yang diatur ketat"],
+    tanda: ["Kurus atau gemuk berlebihan", "Menolak makan lama", "Air kandang cepat keruh karena sisa pakan"],
+    sumber: "Merck Veterinary Manual, ARAV, kebun binatang"
+  }
+};
+
+const cats = document.getElementById('cats');
+const view = document.getElementById('view');
+const q = document.getElementById('q');
+let current = 'ular';
+
+function li(a){ return '<ul>' + a.map(x => '<li>' + x + '</li>').join('') + '</ul>'; }
+
+function render(){
+  const d = DATA[current];
+  cats.innerHTML = Object.keys(DATA).map(k =>
+    '<button class="cat" role="tab" data-k="' + k + '" aria-selected="' + (k === current) + '"><span>' + DATA[k].ikon + '</span>' + DATA[k].nama + '</button>'
+  ).join('');
+  view.innerHTML =
+    '<h2>' + d.nama + '</h2><p class="sub">' + d.tipe + '</p>' +
+    '<div class="stats">' + d.ringkas.map(r => '<div class="stat"><small>' + r[0] + '</small><b>' + r[1] + '</b></div>').join('') + '</div>' +
+    '<details open><summary>Jenis pakan</summary><div class="body">' + li(d.pakan) + '</div></details>' +
+    '<details><summary>Frekuensi makan</summary><div class="body"><table><tbody>' +
+      d.frek.map(r => '<tr><th>' + r[0] + '</th><td>' + r[1] + '</td></tr>').join('') + '</tbody></table></div></details>' +
+    '<details><summary>Ukuran dan porsi</summary><div class="body">' + d.porsi + '</div></details>' +
+    '<details><summary>Suplemen</summary><div class="body">' + d.suplemen + '</div></details>' +
+    '<details class="warn"><summary>Pakan dan kebiasaan yang dihindari</summary><div class="body">' + li(d.terlarang) + '</div></details>' +
+    '<details><summary>Tanda salah pakan</summary><div class="body">' + li(d.tanda) + '</div></details>' +
+    '<p class="src">Sumber: ' + d.sumber + '. Cek dengan dokter hewan sebelum mengubah pola makan.</p>';
+}
+
+cats.addEventListener('click', e => {
+  const b = e.target.closest('.cat');
+  if (!b) return;
+  current = b.dataset.k;
+  render();
+});
+
+q.addEventListener('input', () => {
+  const t = q.value.trim().toLowerCase();
+  if (!t) return;
+  const hit = Object.keys(DATA).find(k => JSON.stringify(DATA[k]).toLowerCase().includes(t));
+  if (hit) { current = hit; render(); }
+  else { view.innerHTML = '<p class="empty">Tidak ada hasil untuk "' + t.replace(/</g, '&lt;') + '". Coba kata lain.</p>'; }
+});
+
+render();
+</script>
+</body>
+</html>
