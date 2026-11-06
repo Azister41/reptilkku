@@ -91,7 +91,7 @@ function formHtml() {
   const hewan = pets().map(p => '<option value="' + esc(p.petName) + '">' + esc(p.petName) + (p.speciesName ? ' (' + esc(p.speciesName) + ')' : '') + '</option>').join('');
   return '<details class="add"><summary>+ Tambah pengingat</summary><form id="f">' +
     '<label>Jenis<select id="fj">' + JENIS.map(j => '<option>' + j + '</option>').join('') + '</select></label>' +
-    '<label>Untuk<select id="fh"><option value="">Semua hewan / umum</option>' + hewan + '</select></label>' +
+    '<label>Untuk (nama hewan, boleh kosong)<input id="fh" list="dh" maxlength="40" placeholder="Contoh: Wagleri, Si Hijau"><datalist id="dh">' + hewan + '</datalist></label>' +
     '<div class="row"><label>Mulai<input id="ft" type="date" value="' + hariIni() + '" required></label>' +
     '<label>Jam<input id="fm" type="time" value="18:00" required></label></div>' +
     '<label>Ulangi<select id="fu">' + ULANG.map(u => '<option value="' + u[0] + '"' + (u[0] === 7 ? ' selected' : '') + '>' + u[1] + '</option>').join('') + '</select></label>' +
@@ -130,7 +130,7 @@ $app.addEventListener('submit', async e => {
   if (!user) return;
   const data = {
     jenis: document.getElementById('fj').value,
-    hewan: document.getElementById('fh').value,
+    hewan: document.getElementById('fh').value.trim().slice(0, 40),
     next: document.getElementById('ft').value,
     jam: document.getElementById('fm').value,
     interval: Number(document.getElementById('fu').value),

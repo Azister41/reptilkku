@@ -1058,11 +1058,27 @@ const app = initializeApp(firebaseConfig), auth = getAuth(app), db = getFirestor
 const $ = id => document.getElementById(id);
 
 // DENGERIN NOTIF REALTIME
+let notifSosial = {n: 0, html: ""};
+let jmlPengingat = 0;
+let unsubPengingat = null;
+
+function gambarNotif() {
+  const panel = document.getElementById('panel-notif');
+  const badge = document.getElementById('badge-notif');
+  const barisPengingat = jmlPengingat > 0
+    ? `<a href="pengingat.html" style="display:block; padding:10px; background:#fff3e0; border-radius:12px; margin-bottom:6px; text-decoration:none; color:#e65100; font-weight:600; text-align:left;">⏰ ${jmlPengingat} pengingat perlu dikerjakan</a>`
+    : "";
+  const isi = barisPengingat + notifSosial.html;
+  panel.innerHTML = isi || `<div style="text-align:center; padding:20px 0; color:#888;"><div style="margin-top:8px;">Belum ada notif</div></div>`;
+  const total = notifSosial.n + jmlPengingat;
+  if (total > 0) { badge.style.display = 'block'; badge.innerText = total; }
+  else { badge.style.display = 'none'; }
+}
+
 function listenNotif() {
   const user = auth.currentUser;
   if (!user) return;
   const q = query(collection(db, "notifications"), where("toUid", "==", user.uid), orderBy("createdAt", "desc"));
-  
   onSnapshot(q, (snap) => {
     let belumDibaca = 0;
     let html = "";
@@ -1074,18 +1090,24 @@ function listenNotif() {
         ${icon} <b>${n.fromNama}</b> ${n.pesan}
       </div>`;
     });
-    document.getElementById('panel-notif').innerHTML = html || `<div style="text-align:center; padding:20px 0; color:#888;"><div style="font-size:32px;"></div><div style="margin-top:8px;">Belum ada notif</div></div>`;
-    
-    const badge = document.getElementById('badge-notif');
-    if (belumDibaca > 0) {
-      badge.style.display = 'block';
-      badge.innerText = belumDibaca;
-    } else {
-      badge.style.display = 'none';
-    }
+    notifSosial = {n: belumDibaca, html};
+    gambarNotif();
   });
 }
 
+function listenPengingat() {
+  const user = auth.currentUser;
+  if (!user) return;
+  if (unsubPengingat) unsubPengingat();
+  unsubPengingat = onSnapshot(collection(db, 'users', user.uid, 'pengingat'), (snap) => {
+    const t = new Date();
+    const hari = t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0');
+    let n = 0;
+    snap.forEach(d => { if ((d.data().next || '9999') <= hari) n++; });
+    jmlPengingat = n;
+    gambarNotif();
+  }, () => {});
+}
 function bukaNotif() {
   const p = document.getElementById('panel-notif');
   p.style.display = p.style.display === 'none' ? 'block' : 'none';
@@ -1150,7 +1172,12 @@ window.bacaNotif = bacaNotif;
 window.kirimNotif = kirimNotif;
 window.listenNotif = listenNotif;
 onAuthStateChanged(auth, (user) => {
-  if (user) listenNotif();
+  if (user) { listenNotif(); listenPengingat(); }
+  else {
+    if (unsubPengingat) { unsubPengingat(); unsubPengingat = null; }
+    jmlPengingat = 0;
+    gambarNotif();
+  }
 });
 // === CHAT iPHONE STYLE ===
 const qChat = query(collection(db, "chat_global"), orderBy("waktu"));
