@@ -65,7 +65,7 @@ details.warn summary::after{color:var(--warn)}
 <script>
 const DATA = {
   ular: {
-    nama: "Ular", ikon: "\u{1F40D}", tipe: "Karnivora",
+    nama: "Ular", ikon: "https://i.postimg.cc/3xkgdkWW/1793407213152.png", tipe: "Karnivora",
     ringkas: [["Tipe makan", "Karnivora, mangsa utuh"], ["Frekuensi umum", "Anakan lebih sering, dewasa lebih jarang"]],
     pakan: ["Mencit (pinky, fuzzy, hopper, dewasa)", "Tikus sesuai ukuran ular", "Anakan ayam (DOC)", "Kadal atau katak kecil untuk spesies tertentu"],
     frek: [["Anakan", "Sekitar 5\u20137 hari sekali"], ["Dewasa", "Sekitar 10\u201314 hari sekali"], ["Catatan", "Beda tiap spesies, ular arboreal kecil sering lebih rapat"]],
@@ -76,7 +76,7 @@ const DATA = {
     sumber: "Merck Veterinary Manual (Exotic Animals), ARAV"
   },
   kura: {
-    nama: "Kura-Kura", ikon: "\u{1F422}", tipe: "Herbivora (mis. sulcata)",
+    nama: "Kura-Kura", ikon: "https://i.postimg.cc/HkFb5T7d/1793407069817.png", tipe: "Herbivora (mis. sulcata)",
     ringkas: [["Tipe makan", "Herbivora, tinggi serat"], ["Frekuensi umum", "Anakan tiap hari, dewasa tiap hari atau hampir tiap hari"]],
     pakan: ["Rumput dan hay (rumput kering) sebagai menu utama", "Daun hijau: dandelion, hibiscus, murbei", "Bunga hibiscus dan kaktus pir (opuntia)", "Sayuran hijau bervariasi"],
     frek: [["Anakan", "Setiap hari"], ["Dewasa", "Setiap hari atau 5\u20136 kali seminggu"], ["Catatan", "Porsi menyesuaikan ukuran, serat harus selalu tersedia"]],
@@ -86,8 +86,21 @@ const DATA = {
     tanda: ["Tempurung menonjol seperti piramida", "Tempurung lunak atau retak", "Diare atau kotoran sangat encer"],
     sumber: "Merck Veterinary Manual, ARAV, Reptifiles"
   },
+    kura_karnivora: {
+    nama: "Kura-Kura",
+    ikon: "https://i.postimg.cc/XvTYWdmq/1793952645165.png",
+    tipe: "Karnivora (mis. Alligator Snapping)",
+    ringkas: [["Tipe makan", "Karnivora, tinggi protein"], ["Frekuensi umum", "Anakan tiap hari, dewasa 2-3x seminggu"]],
+    pakan: ["Pelet khusus kura air / karnivora sebagai menu utama", "Ikan kecil utuh (guppy, cere), udang, cacing tanah", "Daging tanpa lemak & hati ayam (sesekali aja)", "Jangkrik, ulat hongkong, keong kecil untuk variasi"],
+    frek: [["Anakan", "Setiap hari"], ["Dewasa", "2-3x seminggu"], ["Catatan", "Porsi sebesar kepala, sisa pakan langsung angkat"]],
+    porsi: "Sediakan sebanyak yang habis dalam sekali makan, sisa dibersihkan. Jangan sampai obesitas.",
+    suplemen: "Kalsium ditaburkan beberapa kali seminggu. Lampu UVB tetap penting.",
+    terlarang: ["Daging merah berlemak / sosis / makanan manusia", "Ikan mas mentah terus-terusan (kekurangan vitamin B1)", "Pelet ikan koi doang"],
+    tanda: ["Tempurung lunak atau retak", "Menolak makan berminggu-minggu", "Mata bengkak atau berlendir"],
+    sumber: "Merck Veterinary Manual, ARAV, Reptifiles"
+  },
   kadal: {
-    nama: "Kadal", ikon: "\u{1F98E}", tipe: "Beda tiap spesies",
+    nama: "Kadal", ikon: "https://i.postimg.cc/mkLtHg3v/1793406615107.png", tipe: "Beda tiap spesies",
     ringkas: [["Tipe makan", "Herbivora, insektivora, atau omnivora"], ["Frekuensi umum", "Anakan harian, dewasa tiap 2\u20133 hari (insektivora)"]],
     pakan: ["Iguana (herbivora): daun hijau, bunga, sayuran", "Leopard gecko (insektivora): jangkrik, dubia, ulat jerman", "Bearded dragon (omnivora): serangga dan sayuran", "Ulat hongkong hanya sebagai camilan"],
     frek: [["Anakan", "Setiap hari"], ["Dewasa", "Sekitar 2\u20133 hari sekali (insektivora)"], ["Iguana", "Sayuran segar setiap hari"]],
@@ -98,7 +111,7 @@ const DATA = {
     sumber: "Merck Veterinary Manual, ARAV, Reptifiles"
   },
   buaya: {
-    nama: "Buaya", ikon: "\u{1F40A}", tipe: "Karnivora",
+    nama: "Buaya", ikon: "https://i.postimg.cc/cLvQrv6C/1793407186893.png", tipe: "Karnivora",
     ringkas: [["Tipe makan", "Karnivora, ikan dan daging utuh"], ["Frekuensi umum", "Anakan lebih sering, dewasa seminggu sekali atau kurang"]],
     pakan: ["Ikan segar atau beku yang sudah dicairkan", "Ayam utuh", "Tikus atau mencit", "Udang dan serangga besar untuk anakan"],
     frek: [["Anakan", "Sekitar 2\u20133 kali seminggu"], ["Dewasa", "Sekitar seminggu sekali atau lebih jarang"], ["Catatan", "Sesuaikan dengan suhu dan kondisi tubuh"]],
@@ -116,12 +129,16 @@ const q = document.getElementById('q');
 let current = 'ular';
 
 function li(a){ return '<ul>' + a.map(x => '<li>' + x + '</li>').join('') + '</ul>'; }
+function iconHtml(ikon){
+  if(ikon.includes('.jpg') || ikon.includes('.png') || ikon.includes('.webp') || ikon.includes('http')){
+    return '<img src="' + ikon + '" style="width:60px; height:60px; object-fit:cover; border-radius:50%; vertical-align:middle;">';
+  }
+  return '<span>' + ikon + '</span>';
+}
 
 function render(){
   const d = DATA[current];
-  cats.innerHTML = Object.keys(DATA).map(k =>
-    '<button class="cat" role="tab" data-k="' + k + '" aria-selected="' + (k === current) + '"><span>' + DATA[k].ikon + '</span>' + DATA[k].nama + '</button>'
-  ).join('');
+  cats.innerHTML = Object.keys(DATA).map(k => '<button class="cat" role="tab" data-k="' + k + '" aria-selected="' + (k === current) + '">' + iconHtml(DATA[k].ikon) + ' ' + DATA[k].nama + '</button>').join('');
   view.innerHTML =
     '<h2>' + d.nama + '</h2><p class="sub">' + d.tipe + '</p>' +
     '<div class="stats">' + d.ringkas.map(r => '<div class="stat"><small>' + r[0] + '</small><b>' + r[1] + '</b></div>').join('') + '</div>' +
