@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pengingat - ReptilKu</title>
+<style>
+:root{--g9:#173d2d;--g7:#24563f;--g5:#4a7c59;--cream:#f3f1ea;--card:#fffefa;--ink:#1b2b22;--mute:#6b766e;--line:#e3e0d4;--warn:#a63d2f;--warnbg:#fbeeea}
+*{box-sizing:border-box;margin:0}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--cream);color:var(--ink);line-height:1.5;padding-bottom:40px}
+header{background:var(--g9);color:#fff;padding:calc(14px + env(safe-area-inset-top,0px)) 18px 22px}
+.back{display:inline-block;color:#cfe3d6;text-decoration:none;font-size:14px;padding:6px 0}
+h1{font-size:26px;line-height:1.2;margin-top:8px}
+header p{color:#cfe3d6;font-size:14px;margin-top:4px}
+main{padding:0 16px}
+.banner{margin-top:-14px;background:var(--g7);color:#fff;border-radius:16px;padding:14px 16px;box-shadow:0 4px 14px rgba(23,61,45,.15)}
+.banner b{font-size:17px}
+.banner.late{background:var(--warn)}
+details.add{background:var(--card);border:1px solid var(--line);border-radius:16px;margin:14px 0}
+details.add summary{cursor:pointer;list-style:none;padding:14px 16px;font-weight:600;color:var(--g9)}
+details.add summary::-webkit-details-marker{display:none}
+form{padding:0 16px 16px;display:grid;gap:10px}
+label{font-size:13px;font-weight:600;color:var(--mute);display:grid;gap:4px}
+select,input{font:inherit;padding:11px 12px;border:1.5px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);width:100%}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{font:inherit;font-weight:600;border:0;border-radius:12px;padding:12px;background:var(--g9);color:#fff;cursor:pointer}
+.btn.sm{padding:9px 12px;font-size:13px}
+.btn.ghost{background:#ebe8db;color:var(--g9)}
+h2{font-size:18px;color:var(--g9);margin:18px 0 10px}
+.item{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:10px}
+.item.late{border-color:#efcfc8;background:var(--warnbg)}
+.item .t{font-weight:600}
+.item .m{font-size:13px;color:var(--mute);margin-top:2px}
+.item .s{font-size:13px;font-weight:600;margin-top:6px;color:var(--g7)}
+.item.late .s{color:var(--warn)}
+.acts{display:flex;gap:8px;margin-top:10px}
+.empty,.msg{text-align:center;color:var(--mute);padding:26px 0}
+.msg a{color:var(--g7);font-weight:600}
+:focus-visible{outline:3px solid var(--g5);outline-offset:2px}
+</style>
+</head>
+<body>
+<header>
+  <a class="back" href="index.html">&larr; Kembali ke Beranda</a>
+  <h1>Pengingat</h1>
+  <p>Jadwal makan, bersih kandang, dan ganti air.</p>
+</header>
+<main>
+  <div id="app"><p class="msg">Memuat...</p></div>
+</main>
+
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {getAuth,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,addDoc,updateDoc,deleteDoc,doc,onSnapshot,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey: "AIzaSyDlcdAeCqeIf3FCYoDSGv4g3dnzo6-kkPA",
+  authDomain: "reptilku-ff6b0.firebaseapp.com",
+  projectId: "reptilku-ff6b0",
+  appId: "1:1085366860401:web:b02bff4cbc6231879679d0"
+});
+const auth = getAuth(app);
+const db = initializeFirestore(app, {localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()})});
+const $app = document.getElementById('app');
+let user = null, items = [], unsub = null;
+
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad = n => String(n).padStart(2, '0');
+const ymd = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const hariIni = () => ymd(new Date());
+const parse = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const tambah = (s, n) => { const d = parse(s); d.setDate(d.getDate() + n); return ymd(d); };
+const selisih = s => { const t = new Date(); return Math.round((parse(s) - new Date(t.getFullYear(), t.getMonth(), t.getDate())) / 864e5); };
+
+const JENIS = ['Makan', 'Bersihkan kandang', 'Ganti air', 'Cek suhu dan kelembapan', 'Timbang', 'Lainnya'];
+const ULANG = [[0, 'Sekali saja'], [1, 'Setiap hari'], [2, 'Tiap 2 hari'], [3, 'Tiap 3 hari'], [7, 'Tiap 7 hari'], [10, 'Tiap 10 hari'], [14, 'Tiap 14 hari'], [30, 'Tiap 30 hari']];
+
+function pets() {
+  try { return JSON.parse(localStorage.getItem('reptilku_pets') || '[]'); } catch { return []; }
+}
+
+function label(n) {
+  if (n < 0) return 'Terlambat ' + (-n) + ' hari';
+  if (n === 0) return 'Hari ini';
+  if (n === 1) return 'Besok';
+  return n + ' hari lagi';
+}
+
+function formHtml() {
+  const hewan = pets().map(p => '<option value="' + esc(p.petName) + '">' + esc(p.petName) + (p.speciesName ? ' (' + esc(p.speciesName) + ')' : '') + '</option>').join('');
+  return '<details class="add"><summary>+ Tambah pengingat</summary><form id="f">' +
+    '<label>Jenis<select id="fj">' + JENIS.map(j => '<option>' + j + '</option>').join('') + '</select></label>' +
+    '<label>Untuk<select id="fh"><option value="">Semua hewan / umum</option>' + hewan + '</select></label>' +
+    '<div class="row"><label>Mulai<input id="ft" type="date" value="' + hariIni() + '" required></label>' +
+    '<label>Jam<input id="fm" type="time" value="18:00" required></label></div>' +
+    '<label>Ulangi<select id="fu">' + ULANG.map(u => '<option value="' + u[0] + '"' + (u[0] === 7 ? ' selected' : '') + '>' + u[1] + '</option>').join('') + '</select></label>' +
+    '<button class="btn" type="submit">Simpan pengingat</button></form></details>';
+}
+
+function render() {
+  const list = items.slice().sort((a, b) => (a.next + a.jam).localeCompare(b.next + b.jam));
+  const due = list.filter(i => selisih(i.next) <= 0);
+  const late = list.filter(i => selisih(i.next) < 0).length;
+  try { localStorage.setItem('reptilku_reminder_due', String(due.length)); } catch {}
+
+  const banner = due.length
+    ? '<div class="banner' + (late ? ' late' : '') + '"><b>' + due.length + ' jadwal perlu dikerjakan</b><div>' + (late ? late + ' di antaranya terlambat.' : 'Semangat merawat hari ini!') + '</div></div>'
+    : '<div class="banner"><b>Semua beres hari ini</b><div>Tidak ada jadwal yang menunggu.</div></div>';
+
+  const cards = list.length ? list.map(i => {
+    const n = selisih(i.next);
+    const ul = (ULANG.find(u => u[0] === Number(i.interval)) || [0, 'Sekali saja'])[1];
+    return '<div class="item' + (n < 0 ? ' late' : '') + '">' +
+      '<div class="t">' + esc(i.jenis) + (i.hewan ? ' &middot; ' + esc(i.hewan) : '') + '</div>' +
+      '<div class="m">' + esc(i.next) + ' pukul ' + esc(i.jam) + ' &middot; ' + ul + '</div>' +
+      '<div class="s">' + label(n) + '</div>' +
+      '<div class="acts"><button class="btn sm" data-act="done" data-id="' + i.id + '">Selesai</button>' +
+      '<button class="btn sm ghost" data-act="del" data-id="' + i.id + '">Hapus</button></div></div>';
+  }).join('') : '<p class="empty">Belum ada pengingat. Tambahkan yang pertama di atas.</p>';
+
+  const open = document.querySelector('details.add')?.open;
+  $app.innerHTML = banner + formHtml() + '<h2>Jadwal</h2>' + cards;
+  if (open) document.querySelector('details.add').open = true;
+}
+
+$app.addEventListener('submit', async e => {
+  if (e.target.id !== 'f') return;
+  e.preventDefault();
+  if (!user) return;
+  const data = {
+    jenis: document.getElementById('fj').value,
+    hewan: document.getElementById('fh').value,
+    next: document.getElementById('ft').value,
+    jam: document.getElementById('fm').value,
+    interval: Number(document.getElementById('fu').value),
+    createdAt: serverTimestamp()
+  };
+  try { await addDoc(collection(db, 'users', user.uid, 'pengingat'), data); }
+  catch { alert('Gagal menyimpan. Cek koneksi atau aturan Firestore.'); }
+});
+
+$app.addEventListener('click', async e => {
+  const b = e.target.closest('[data-act]');
+  if (!b || !user) return;
+  const it = items.find(x => x.id === b.dataset.id);
+  if (!it) return;
+  const ref = doc(db, 'users', user.uid, 'pengingat', it.id);
+  try {
+    if (b.dataset.act === 'del') { if (confirm('Hapus pengingat ini?')) await deleteDoc(ref); }
+    else if (Number(it.interval) === 0) await deleteDoc(ref);
+    else await updateDoc(ref, {next: tambah(hariIni(), Number(it.interval)), selesai: hariIni()});
+  } catch { alert('Gagal memperbarui. Coba lagi.'); }
+});
+
+onAuthStateChanged(auth, u => {
+  user = u;
+  if (unsub) { unsub(); unsub = null; }
+  if (!u) {
+    $app.innerHTML = '<p class="msg">Masuk dulu agar pengingatmu tersimpan.<br><a href="index.html">Buka Beranda &rarr; Akun</a></p>';
+    return;
+  }
+  unsub = onSnapshot(collection(db, 'users', u.uid, 'pengingat'), s => {
+    items = s.docs.map(d => ({id: d.id, ...d.data()}));
+    render();
+  }, () => { $app.innerHTML = '<p class="msg">Tidak bisa memuat pengingat. Aturan Firestore mungkin belum dipasang.</p>'; });
+});
+</script>
+</body>
+</html>
