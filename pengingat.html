@@ -49,6 +49,8 @@ h2{font-size:18px;color:var(--g9);margin:18px 0 10px}
   <div id="app"><p class="msg">Memuat...</p></div>
 </main>
 
+<script src="notif.js"></script>
+
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import {getAuth,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
@@ -163,6 +165,7 @@ onAuthStateChanged(auth, u => {
   unsub = onSnapshot(collection(db, 'users', u.uid, 'pengingat'), s => {
     items = s.docs.map(d => ({id: d.id, ...d.data()}));
     render();
+if (window.jadwalkanPengingat) window.jadwalkanPengingat(items, true);
   }, () => { $app.innerHTML = '<p class="msg">Tidak bisa memuat pengingat. Aturan Firestore mungkin belum dipasang.</p>'; });
 });
 </script>

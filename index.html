@@ -1105,6 +1105,7 @@ function listenPengingat() {
     let n = 0;
     snap.forEach(d => { if ((d.data().next || '9999') <= hari) n++; });
     jmlPengingat = n;
+    if (window.jadwalkanPengingat) window.jadwalkanPengingat(snap.docs.map(d => ({id: d.id, ...d.data()})), false);
     gambarNotif();
   }, () => {});
 }
@@ -1762,5 +1763,6 @@ function hitungJarak(lat1, lon1, lat2, lon2) {
     } catch(e) { alert("Error: " + e.message); console.log(e); }
   }
 </script>
+<script src="notif.js"></script>
 </body>
 </html>
