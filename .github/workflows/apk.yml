@@ -24,6 +24,10 @@ jobs:
           mkdir -p www
           cp index.html www/index.html
       - run: npx cap add android
+      - name: Izin notifikasi Android
+        run: |
+          M=android/app/src/main/AndroidManifest.xml
+          grep -q POST_NOTIFICATIONS $M || sed -i 's#<application#<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n    <application#' $M
       - run: npx cap sync android
       - name: Build APK debug
         working-directory: android
