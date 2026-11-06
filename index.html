@@ -1600,46 +1600,26 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));
 }
 
-// FIX BLANK PUTIH V3 - FINAL
-(function() {
-  // amankan 2 history biar gak bisa keluar langsung
-  history.replaceState({x:1}, '', location.href);
-  history.pushState({x:2}, '', location.href);
+// BACK BERTAHAP
+(function () {
+  const asli = window.showPage;
+  let dariBack = false;
 
-  window.addEventListener('popstate', function() {
-    console.log('back kepencet, balikin ke beranda');
-    
-    // 1. Push lagi biar gak keluar
-    history.pushState({x:2}, '', location.href);
-    
-    // 2. Cari tombol Beranda di bawah dan klik paksa
-    setTimeout(() => {
-      let btns = document.querySelectorAll('button, a, div');
-      for (let b of btns) {
-        let t = (b.innerText || '').trim().toLowerCase();
-        if (t === 'beranda') {
-          b.click();
-          return;
-        }
-      }
-      // kalau gak ketemu pakai cara kasar: reload halaman ke beranda
-      // hapus hash biar konten muncul lagi
-      if (location.hash) {
-        location.hash = '';
-        location.reload();
-      }
-    }, 50);
-  });
-
-  // setiap klik menu bawah, tambah history biar bisa di-back 1-1
-  document.addEventListener('click', (e) => {
-    let el = e.target.closest('button, a');
-    if (!el) return;
-    let txt = (el.innerText || '').toLowerCase();
-    if (['beranda','ensiklopedia','perawatan','komunitas','akun'].some(k => txt.includes(k))) {
-      if (txt.includes('beranda')) return; // beranda gak usah push
-      history.pushState({x:2}, '', location.href);
+  window.showPage = function (nama) {
+    asli(nama);
+    if (!dariBack && !(history.state && history.state.page === nama)) {
+      history.pushState({page: nama}, '', '#' + nama);
     }
+  };
+
+  const awal = location.hash.slice(1) || 'home';
+  history.replaceState({page: awal}, '', location.href);
+
+  window.addEventListener('popstate', function (e) {
+    const nama = (e.state && e.state.page) || 'home';
+    dariBack = true;
+    asli(nama);
+    dariBack = false;
   });
 })();
 </script>
