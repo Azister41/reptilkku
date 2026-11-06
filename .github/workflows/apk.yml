@@ -25,6 +25,9 @@ jobs:
           cp index.html www/index.html
       - run: npx cap add android
       - name: Izin notifikasi Android
+        run: |
+          M=android/app/src/main/AndroidManifest.xml
+          grep -q POST_NOTIFICATIONS $M || sed -i 's#<application#<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n    <application#' $M
       - name: Siapkan ikon dari logo
         run: |
           if ! command -v magick >/dev/null 2>&1 && ! command -v convert >/dev/null 2>&1; then
@@ -36,9 +39,6 @@ jobs:
           $IM logo.png -resize 640x640 -background '#173d30' -gravity center -extent 1024x1024 -flatten assets/icon-only.png
       - name: Buat ikon aplikasi
         run: npx @capacitor/assets generate --android --iconBackgroundColor '#173d30' --iconBackgroundColorDark '#173d30'
-        run: |
-          M=android/app/src/main/AndroidManifest.xml
-          grep -q POST_NOTIFICATIONS $M || sed -i 's#<application#<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n    <application#' $M
       - run: npx cap sync android
       - name: Build APK debug
         working-directory: android
