@@ -1,0 +1,8 @@
+{
+  "appId": "com.reptilku.app",
+  "appName": "ReptilKu",
+  "webDir": "www",
+  "server": {
+    "url": "https://azister41.github.io/reptilkku/"
+  }
+}
