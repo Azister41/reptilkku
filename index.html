@@ -162,6 +162,7 @@
 .post-actions button.on{color:#d33}
 .cmt{font-size:12px;background:var(--cream);border-radius:12px;padding:8px 10px;margin:6px 0}
 .link-btn{border:0;background:transparent;color:var(--leaf);font-weight:700;font-size:12px;width:100%;margin-top:8px}
+html, body { overflow-x: hidden; max-width: 100%; }
   </style>
 <head>
   <meta charset="UTF-8">
@@ -209,7 +210,7 @@
         <p>Temukan informasi spesies, pelajari kebutuhan perawatan, dan tumbuh bersama komunitas pecinta reptil.</p>
         <div class="hero-art"></div>
       </div>
-  <div style="display:flex; gap:8px; margin:8px 0 12px 0;">
+  <div style="display:flex; flex-wrap:nowrap; gap:8px; margin:8px 0 12px 0; overflow-x:auto; max-width:100%; min-width:0; scrollbar-width:none;">
   <div onclick="showPage('penyakit')" style="background:#173d30; color:white; padding:8px 14px; border-radius:20px; font-size:13px; white-space:nowrap; cursor:pointer; font-weight:600; line-height:1;">Penyakit</div>
   <div onclick="cariDokter()" style="background:#173d30; color:white; padding:8px 14px; border-radius:20px; font-size:13px; white-space:nowrap; cursor:pointer; font-weight:600; line-height:1;"> Dokter Terdekat</div>
  <a href="pakan.html" style="background:#16372E; color:white; padding:8px 14px; border-radius:20px; text-decoration:none; font-size:13px; font-weight:600; white-space:nowrap;">
