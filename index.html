@@ -1621,6 +1621,20 @@ if ('serviceWorker' in navigator) {
     asli(nama);
     dariBack = false;
   });
+    // Tombol back di aplikasi Android
+  const AppCap = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
+  if (AppCap) {
+    AppCap.addListener('backButton', function () {
+      const jendela = ['modalDokter', 'catatModal', 'feedModal', 'modal-qris', 'panel-notif'];
+      for (const id of jendela) {
+        const el = document.getElementById(id);
+        if (el && getComputedStyle(el).display !== 'none') { el.style.display = 'none'; return; }
+      }
+      const sekarang = history.state && history.state.page;
+      if (sekarang && sekarang !== 'home') history.back();
+      else AppCap.exitApp();
+    });
+  }
 })();
 </script>
 <div id="modalDokter" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:9999; padding:20px; overflow:auto;">
