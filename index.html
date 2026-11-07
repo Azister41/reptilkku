@@ -795,7 +795,7 @@ function catatShedding(petId){
   {
     id: "ispa",
     nama: "ISPA / Flu Reptil",
-    hewan: "Semua reptil, sering Kura air & Ball Python",
+    hewan: "Semua reptil, sering Kura air & Ball Python, Buaya", 
     ciri: "Mangap terus, ngorok, lendir di hidung/mulut, kepala dongak, tidak mau makan",
     penyebab: "Suhu terlalu dingin + kelembapan tinggi + kandang kotor",
     pencegahan: "Suhu warm side 30-32°C, kandang jangan becek, sirkulasi udara bagus",
@@ -805,7 +805,7 @@ function catatShedding(petId){
   {
     id: "mouth-rot",
     nama: "Stomatitis / Sariawan / Mouth Rot",
-    hewan: "Ular, Iguana, Kura-kura",
+    hewan: "Ular, Iguana, Kura-kura, Buaya", 
     ciri: "Gusi bengkak merah, ada nanah kuning kayak keju di mulut, bau mulut, gak mau makan",
     penyebab: "Luka di mulut + bakteri + stress + suhu dingin",
     pencegahan: "Jangan kasih mangsa hidup yang bisa gigit balik, jaga kebersihan kandang",
@@ -871,7 +871,52 @@ function catatShedding(petId){
     pencegahan: "Rendam rutin, pakan berserat, kalsium cukup",
     obatUmum: "DARURAT! Jaga tetap lembab pakai air gula / air madu, jangan didorong pakai tangan kotor. Langsung bawa ke dokter untuk dijahit balik.",
     bahaya: "Sangat Tinggi - Darurat"
-  }
+  }, 
+ {
+  nama: "Mouth Rot / Sariawan",
+  hewan: "Buaya",
+  ciri: "Mulut bau, nanah putih di gusi, gak mau makan",
+  penyebab: "Mulut luka abis makan, air kotor, suhu dingin, stress",
+  bahaya: "Tinggi - bisa kena tulang rahang",
+  obat: "Betadine encer buat bersihin mulut, salep antibiotik hewan. Parah = suntik antibiotik dokter.",
+  pencegahan: "Ganti air 2 hari sekali, jangan kasih tulang tajem, jaga suhu 28-30°C"
+},
+{
+  nama: "ISPA / Pneumonia Buaya",
+  hewan: "Buaya",
+  ciri: "Mangap terus, ngorok, lendir di hidung, kepala dongak",
+  penyebab: "Air terlalu dingin, gak ada tempat berjemur, kandang lembab dingin",
+  bahaya: "Sangat Tinggi - bisa mati mendadak",
+  obat: "Gak ada obat warung. Harus antibiotik dokter. Hangatin air 30-32°C + jemur.",
+  pencegahan: "Wajib ada tempat berjemur kering + UVB, air jangan di bawah 26°C"
+},
+{
+  nama: "Jamur Kulit",
+  hewan: "Buaya",
+  ciri: "Bercak putih di sisik, sisik ngelupas, kulit lembek",
+  penyebab: "Air gak pernah ganti, kandang kotor, gak pernah jemur",
+  bahaya: "Sedang - bisa jadi luka terbuka",
+  obat: "Rendam Betadine encer, keringin & jemur 30 menit, oles Betadine di bercak",
+  pencegahan: "Ganti air tiap 2 hari, angkat sisa makanan, jemur tiap pagi"
+},
+{
+  nama: "Cacingan",
+  hewan: "Buaya",
+  ciri: "Makan rakus tapi kurus, pup encer berlendir, perut buncit",
+  penyebab: "Daging mentah kotor, air kotor, makan hewan liar",
+  bahaya: "Sedang ke Tinggi",
+  obat: "Obat cacing khusus reptil, dosis HARUS dari dokter. Jangan obat manusia.",
+  pencegahan: "Bekuin daging 24 jam sebelum dikasih, jangan kasih hewan liar"
+},
+{
+  nama: "Abses / Benjolan",
+  hewan: "Buaya",
+  ciri: "Benjolan keras di kaki/rahang/ekor, jalan pincang",
+  penyebab: "Luka kegigit temen, kegores kandang, luka kena bakteri",
+  bahaya: "Sedang",
+  obat: "Kompres hangat + Betadine, JANGAN dipencet. Dokter yang bedah + antibiotik.",
+  pencegahan: "Jangan gabung buaya beda ukuran, cek kandang jangan ada yang tajem"
+}
 ]
 function tampilPenyakit(filterHewan = "semua") {
   const list = document.getElementById("listPenyakit");
