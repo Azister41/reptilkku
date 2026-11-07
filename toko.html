@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Toko Reptil - ReptilKu</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; font-family: 'Segoe UI', sans-serif; }
+body { background:#f0f7f0; padding-bottom:90px; }
+.header { background:#1a7a3a; color:white; padding:20px 16px 16px; position:sticky; top:0; z-index:10; }
+.header a { color:white; text-decoration:none; font-size:14px; }
+.header h1 { font-size:22px; margin-top:8px; }
+.header p { font-size:13px; opacity:0.9; margin-top:4px; }
+.search { background:white; margin:14px 16px 0; padding:12px 14px; border-radius:12px; display:flex; gap:8px; align-items:center; }
+.search input { border:none; outline:none; width:100%; font-size:14px; }
+.kategori { display:flex; gap:8px; overflow-x:auto; padding:14px 16px 4px; scrollbar-width:none; }
+.kategori button { background:white; border:1px solid #d1e7d1; padding:8px 16px; border-radius:20px; font-size:13px; white-space:nowrap; cursor:pointer; font-weight:600; }
+.kategori button.active { background:#1a7a3a; color:white; border-color:#1a7a3a; }
+.info { background:#fff3cd; margin:12px 16px; padding:12px; border-radius:12px; font-size:12px; line-height:1.5; color:#664d03; }
+.grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:12px 16px; }
+.card { background:white; border-radius:16px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.06); }
+.card img { width:100%; height:140px; object-fit:cover; }
+.card-body { padding:10px; }
+.badge { background:#ff6b35; color:white; font-size:10px; padding:3px 7px; border-radius:20px; font-weight:700; }
+.card h3 { font-size:13px; margin:7px 0 4px; line-height:1.4; height:36px; overflow:hidden; }
+.rating { font-size:11px; color:#666; }
+.harga { color:#1a7a3a; font-weight:800; font-size:15px; margin:6px 0 2px; }
+.harga-coret { font-size:11px; color:#999; text-decoration:line-through; font-weight:400; }
+.btn-beli { display:block; background:#ee4d2d; color:white; text-align:center; padding:9px; border-radius:10px; font-size:13px; font-weight:700; text-decoration:none; margin-top:8px; }
+.btn-beli.shopee { background:#ee4d2d; }
+.btn-beli.tiktok { background:#000; }
+.btn-beli.tokped { background:#03ac0e; }
+.footer-note { text-align:center; font-size:11px; color:#888; padding:10px 20px; line-height:1.5; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <a href="index.html">← Kembali</a>
+  <h1>🛒 Toko Reptil</h1>
+  <p>Peralatan pilihan, dikirim dari mitra terpercaya</p>
+</div>
+
+<div class="search">
+  <span>🔍</span>
+  <input type="text" placeholder="Cari lampu, kandang, pakan..." onkeyup="cari(this.value)">
+</div>
+
+<div class="kategori">
+  <button class="active" onclick="filterKategori('semua',this)">Semua</button>
+  <button onclick="filterKategori('lampu',this)">💡 Lampu</button>
+  <button onclick="filterKategori('kandang',this)">🏠 Kandang</button>
+  <button onclick="filterKategori('pakan',this)">🦗 Pakan</button>
+  <button onclick="filterKategori('vitamin',this)">💊 Vitamin</button>
+</div>
+
+<div class="info">
+  💡 <b>Info:</b> Produk di sini dari mitra Shopee / Tokopedia / TikTok. Kamu bayar di sana, barang dikirim langsung dari toko. ReptilKu hanya bantu pilihin yang bagus.
+</div>
+
+<div class="grid" id="gridProduk">
+
+  <!-- PRODUK 1 -->
+  <div class="card" data-kategori="lampu" data-nama="lampu uvb">
+    <img src="https://images.unsplash.com/photo-1549480017-d76466a4b7e8?w=400">
+    <div class="card-body">
+      <span class="badge">BEST SELLER</span>
+      <h3>Lampu UVB 5.0 Buat Gecko & Biawak</h3>
+      <div class="rating">⭐ 4.9 | Terjual 2.000+</div>
+      <div class="harga">Rp 85.000 <span class="harga-coret">Rp 120.000</span></div>
+      <a class="btn-beli shopee" href="GANTI_LINK_SHOPEE_KAMU_DI_SINI" target="_blank">Beli di Shopee 🧡</a>
+    </div>
+  </div>
+
+  <!-- PRODUK 2 -->
+  <div class="card" data-kategori="kandang" data-nama="kandang terrarium">
+    <img src="https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=400">
+    <div class="card-body">
+      <span class="badge">TERBARU</span>
+      <h3>Terrarium Kaca 60cm Buat Gecko / Kura</h3>
+      <div class="rating">⭐ 4.8 | Terjual 850+</div>
+      <div class="harga">Rp 285.000</div>
+      <a class="btn-beli tokped" href="GANTI_LINK_TOKPED_KAMU" target="_blank">Beli di Tokopedia 💚</a>
+    </div>
+  </div>
+
+  <!-- PRODUK 3 -->
+  <div class="card" data-kategori="pakan" data-nama="pelet kura">
+    <img src="https://images.unsplash.com/photo-1589924691995-400dc9ecc119?w=400">
+    <div class="card-body">
+      <h3>Pelet Kura Ambon & Brazil 250gr</h3>
+      <div class="rating">⭐ 4.9 | Terjual 5.000+</div>
+      <div class="harga">Rp 32.000</div>
+      <a class="btn-beli shopee" href="GANTI_LINK_SHOPEE_KAMU" target="_blank">Beli di Shopee 🧡</a>
+    </div>
+  </div>
+
+  <!-- PRODUK 4 -->
+  <div class="card" data-kategori="vitamin" data-nama="kalsium">
+    <img src="https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=400">
+    <div class="card-body">
+      <h3>Kalsium Bubuk + Vitamin D3 100gr</h3>
+      <div class="rating">⭐ 5.0 | Terjual 3.200+</div>
+      <div class="harga">Rp 45.000</div>
+      <a class="btn-beli tiktok" href="GANTI_LINK_TIKTOK_KAMU" target="_blank">Beli di TikTok 🖤</a>
+    </div>
+  </div>
+
+  <!-- PRODUK 5 -->
+  <div class="card" data-kategori="lampu" data-nama="lampu basking">
+    <img src="https://images.unsplash.com/photo-1502139214982-d0ad755818d8?w=400">
+    <div class="card-body">
+      <h3>Lampu Basking 75W Pemanas Biawak</h3>
+      <div class="rating">⭐ 4.7 | Terjual 1.100+</div>
+      <div class="harga">Rp 55.000</div>
+      <a class="btn-beli shopee" href="GANTI_LINK_SHOPEE_KAMU" target="_blank">Beli di Shopee 🧡</a>
+    </div>
+  </div>
+
+  <!-- PRODUK 6 -->
+  <div class="card" data-kategori="pakan" data-nama="jangkrik kering">
+    <img src="https://images.unsplash.com/photo-1592194996308-7b43878e84a6?w=400">
+    <div class="card-body">
+      <h3>Jangkrik Kering Buat Gecko & Biawak 100gr</h3>
+      <div class="rating">⭐ 4.8 | Terjual 900+</div>
+      <div class="harga">Rp 28.000</div>
+      <a class="btn-beli tokped" href="GANTI_LINK_TOKPED_KAMU" target="_blank">Beli di Tokopedia 💚</a>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer-note">
+  ReptilKu adalah peserta Affiliate Shopee / Tokopedia / TikTok.<br>
+  Kalau kamu beli lewat link di sini, kami dapat komisi kecil tanpa harga kamu nambah. Terima kasih sudah support ReptilKu 🙏
+</div>
+
+<script>
+function filterKategori(kat, btn){
+  document.querySelectorAll('.kategori button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.card').forEach(c=>{
+    if(kat==='semua' || c.dataset.kategori===kat) c.style.display='block';
+    else c.style.display='none';
+  });
+}
+function cari(teks){
+  teks = teks.toLowerCase();
+  document.querySelectorAll('.card').forEach(c=>{
+    if(c.dataset.nama.includes(teks)) c.style.display='block';
+    else c.style.display='none';
+  });
+}
+</script>
+</body>
+</html>
