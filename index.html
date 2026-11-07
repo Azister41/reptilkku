@@ -421,6 +421,7 @@ html, body { overflow-x: hidden; max-width: 100%; }
     <section id="page-chat" class="page">
   <h1 class="page-title">Chat Anggota</h1>
   <p class="page-subtitle">Ngobrol bareng pecinta reptil</p>
+  <button id="btnBersihChat" onclick="bersihkanChatLama()" style="display:none; margin-top:10px; background:#fff; border:1px solid #d32f2f; color:#d32f2f; border-radius:14px; padding:8px 14px; font-size:13px; font-weight:600;">🧹 Bersihkan chat lebih dari 7 hari (admin)</button>
   
   <div id="chatBox" style="background:#f5f5f7; height:65vh; overflow-y:auto; padding:16px; border-radius:24px; margin-top:16px; display:flex; flex-direction:column; gap:6px;"></div>
   
@@ -1092,7 +1093,7 @@ if (validPages.includes(startPage)) showPage(startPage);
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import {getAuth,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,updateProfile} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import {getFirestore,collection,addDoc,query, where, orderBy,limit,onSnapshot,doc,updateDoc,deleteDoc,arrayUnion,arrayRemove,getDocs,getDoc,setDoc,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import {getFirestore,collection,addDoc,query, where, orderBy,limit,onSnapshot,doc,updateDoc,deleteDoc,arrayUnion,arrayRemove,getDocs,getDoc,setDoc,serverTimestamp,Timestamp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 // GANTI dengan config dari Firebase Console
 const firebaseConfig = {
   apiKey: "AIzaSyDlcdAeCqeIf3FCYoDSGv4g3dnzo6-kkPA",
@@ -1227,21 +1228,26 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 // === CHAT iPHONE STYLE ===
-const qChat = query(collection(db, "chat_global"), orderBy("waktu"));
+const TUJUH_HARI = 7*24*60*60*1000;
+const qChat = query(collection(db, "chat_global"),
+  where("waktu", ">", Timestamp.fromMillis(Date.now() - TUJUH_HARI)), orderBy("waktu"));
 let chatDocs = [];
 function renderChat() {
   const box = document.getElementById('chatBox');
   if(!box) return;
   const u = auth.currentUser;
   const myName = u?.displayName, myEmail = u?.email;
+  const adm = !!u && (u.email || '').trim().toLowerCase() === ADMIN_EMAIL.toLowerCase();
+  const bb = document.getElementById('btnBersihChat');
+  if (bb) bb.style.display = adm ? 'inline-block' : 'none';
   let html = "";
-  chatDocs.forEach(m => {
+  chatDocs.forEach((m, idx) => {
     // pesan baru: cocokkan uid; pesan lama (tanpa senderId): cocokkan nama/email
     const isMe = !!u && (m.senderId
       ? m.senderId === u.uid
       : (m.pengirim === myName || m.pengirim === myEmail));
     html += `
-      <div style="display:flex; flex-direction:column; align-items:${isMe ? 'flex-end' : 'flex-start'}; margin-bottom:2px;">
+      <div ${adm ? `onclick="menuChat(${idx})"` : ''} style="display:flex; flex-direction:column; align-items:${isMe ? 'flex-end' : 'flex-start'}; margin-bottom:2px; ${adm ? 'cursor:pointer;' : ''}">
         ${!isMe ? `<span style="font-size:11px; color:#8e8e93; margin:0 0 2px 12px;">${esc(m.pengirim)}</span>` : ''}
         <div style="max-width:75%; padding:10px 14px; border-radius:18px; font-size:15px; line-height:1.3; word-wrap:break-word;
                     background:${isMe ? '#0a84ff' : 'white'};
@@ -1257,7 +1263,7 @@ function renderChat() {
   box.scrollTop = box.scrollHeight;
 }
 onSnapshot(qChat, (snap) => {
-  chatDocs = snap.docs.map(d => d.data());
+  chatDocs = snap.docs.map(d => ({id: d.id, ...d.data()}));
   renderChat();
 });
 // render ulang saat status login berubah (login/logout/ganti nama)
@@ -1266,14 +1272,65 @@ window.kirimPesan = async () => {
   const input = document.getElementById('inputChat');
   if(!input || !input.value.trim()) return;
   if(!auth.currentUser) return alert('Masuk dulu lewat menu Komunitas.');
-  await addDoc(collection(db, "chat_global"), {
+  try {
+    const us = await getDoc(doc(db, 'users', auth.currentUser.uid));
+    if (us.exists() && us.data().banned) return alert('Akunmu diblokir dari chat karena melanggar aturan.');
+  } catch (e) {}
+  try { await addDoc(collection(db, "chat_global"), {
     senderId: auth.currentUser.uid,
     pengirim: auth.currentUser?.displayName || auth.currentUser?.email || "Anggota",
     pesan: input.value.trim(),
     waktu: serverTimestamp()
   });
   input.value = "";
+  } catch (e) { alert('Pesan gagal dikirim. Mungkin akunmu diblokir.'); }
 }
+
+// ===== MODERASI CHAT (ADMIN) =====
+window.menuChat = (i) => {
+  if (!window.isAdmin) return;
+  const m = chatDocs[i]; if (!m) return;
+  const lama = document.getElementById('chatMenu'); if (lama) lama.remove();
+  const el = document.createElement('div');
+  el.id = 'chatMenu';
+  el.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9999;display:flex;align-items:flex-end;justify-content:center';
+  el.onclick = e => { if (e.target === el) el.remove(); };
+  const btn = 'padding:14px;border:none;border-radius:14px;font-size:15px;font-weight:600;background:#f2f2f7;';
+  const bisaBan = m.senderId && m.senderId !== auth.currentUser.uid;
+  el.innerHTML = `<div style="background:#fff;width:100%;max-width:500px;border-radius:20px 20px 0 0;padding:16px;display:flex;flex-direction:column;gap:10px">
+    <div style="font-size:13px;color:#666"><b>${esc(m.pengirim)}</b>: ${esc(String(m.pesan).slice(0, 80))}</div>
+    <button style="${btn}color:#d32f2f" onclick="hapusPesan(${i})">🗑 Hapus pesan</button>
+    ${bisaBan ? `<button style="${btn}color:#d32f2f" onclick="banAnggota('${m.senderId}', true)">🚫 Banned pengirim</button>` : ''}
+    <button style="${btn}" onclick="document.getElementById('chatMenu').remove()">Batal</button>
+  </div>`;
+  document.body.appendChild(el);
+};
+window.hapusPesan = async (i) => {
+  const m = chatDocs[i]; if (!m || !window.isAdmin) return;
+  if (!confirm('Hapus pesan ini?')) return;
+  try { await deleteDoc(doc(db, 'chat_global', m.id)); } catch (e) { alert('Gagal hapus: ' + e.message); }
+  const el = document.getElementById('chatMenu'); if (el) el.remove();
+};
+window.banAnggota = async (uid, status) => {
+  if (!window.isAdmin || !uid) return;
+  if (uid === auth.currentUser.uid) return alert('Tidak bisa banned diri sendiri.');
+  if (!confirm(status ? 'Banned anggota ini dari chat?' : 'Buka banned anggota ini?')) return;
+  try {
+    await setDoc(doc(db, 'users', uid), {banned: status}, {merge: true});
+    alert(status ? 'Anggota di-banned.' : 'Banned dibuka.');
+  } catch (e) { alert('Gagal: ' + e.message); }
+  const el = document.getElementById('chatMenu'); if (el) el.remove();
+  if (document.getElementById('list-anggota-baru') && document.getElementById('page-admin').classList.contains('active')) window.hitungAnggota();
+};
+window.bersihkanChatLama = async () => {
+  if (!window.isAdmin) return;
+  if (!confirm('Hapus PERMANEN semua pesan yang lebih dari 7 hari?')) return;
+  try {
+    const sn = await getDocs(query(collection(db, 'chat_global'), where('waktu', '<', Timestamp.fromMillis(Date.now() - TUJUH_HARI))));
+    await Promise.all(sn.docs.map(d => deleteDoc(d.ref)));
+    alert(sn.size + ' pesan lama dihapus.');
+  } catch (e) { alert('Gagal: ' + e.message); }
+};
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pesan = e => ({'auth/invalid-credential':'Email atau kata sandi salah.','auth/email-already-in-use':'Email sudah terdaftar.','auth/weak-password':'Kata sandi minimal 6 karakter.','auth/invalid-email':'Format email tidak valid.'}[e.code] || 'Terjadi kesalahan: ' + e.code);
 let user = null, unsub = null, daftar = false;
@@ -1537,7 +1594,9 @@ window.hitungAnggota = async () => {
       html += '<div style="padding:12px 0;border-bottom:1px solid #eee;display:flex;justify-content:space-between">'
         + '<div><b>' + esc(x.name || x.email || 'Tanpa nama') + '</b><br>'
         + '<span style="font-size:11px;color:#888">' + esc(x.email || '-') + (tgl ? ' | ' + tgl.toLocaleDateString('id-ID') : '') + '</span></div>'
-        + '<span style="font-size:10px;background:#16372E;color:white;padding:4px 8px;border-radius:10px;height:fit-content">' + (jadiAdmin ? 'Admin' : 'Member') + '</span></div>';
+        + '<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end"><span style="font-size:10px;background:' + (x.banned ? '#d32f2f' : '#16372E') + ';color:white;padding:4px 8px;border-radius:10px;height:fit-content">' + (jadiAdmin ? 'Admin' : x.banned ? 'Banned' : 'Member') + '</span>'
+        + (jadiAdmin ? '' : '<button onclick="banAnggota(\'' + d.id + '\',' + (!x.banned) + ')" style="font-size:11px;border:1px solid #ccc;background:#fff;border-radius:10px;padding:4px 8px">' + (x.banned ? 'Buka banned' : 'Banned') + '</button>')
+        + '</div></div>';
     });
     document.getElementById('total-anggota').innerText = sn.size;
     document.getElementById('anggota-baru-count').innerText = baru;
