@@ -1,6 +1,6 @@
 // Service worker ReptilKu.
 // Naikkan angka versi ini setiap kali kamu mengubah file di daftar ASET.
-const VERSI = 'reptilku-v1';
+const VERSI = 'reptilku-v2';
 const ASET = ['./', './index.html', '. /pakan.html', '. /toko.html', './manifest.json'];
 
 // Data hidup (login, database) tidak boleh disimpan di cache.
