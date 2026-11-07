@@ -219,6 +219,7 @@ html, body { overflow-x: hidden; max-width: 100%; }
 <a href="pengingat.html" style="background:#16372E; color:white; padding:8px 14px; border-radius:20px; text-decoration:none; font-size:13px; font-weight:600; white-space:nowrap;">
   Pengingat
 </a>
+<a href="toko.html" style="background:#16372E; color:white;padding:8px 14px; border-radius:20px; text-decoration:none;font-size:13px; font-weight:600; white-space:nowrap;">Toko</a>
 </div>
       
       <div class="search-wrap">
@@ -615,7 +616,7 @@ if (typeof firebase !== 'undefined') firebase.auth().onAuthStateChanged(user => 
     if(akunPage && !document.getElementById('btn-admin')){
       akunPage.innerHTML += `
         <div id="btn-admin" onclick="showPage('admin'); hitungAnggota()" style="background:#16372E; color:white; padding:14px; border-radius:14px; margin-top:16px; text-align:center; font-weight:700">
-          👑 Dashboard Admin - Lihat Anggota
+          Dashboard Admin - Lihat Anggota
         </div>
       `;
     }
@@ -795,7 +796,7 @@ function catatShedding(petId){
   {
     id: "ispa",
     nama: "ISPA / Flu Reptil",
-    hewan: "Semua reptil, sering Kura air & Ball Python, Buaya", 
+    hewan: "Semua reptil, sering Kura air & Ball Python", 
     ciri: "Mangap terus, ngorok, lendir di hidung/mulut, kepala dongak, tidak mau makan",
     penyebab: "Suhu terlalu dingin + kelembapan tinggi + kandang kotor",
     pencegahan: "Suhu warm side 30-32°C, kandang jangan becek, sirkulasi udara bagus",
@@ -1053,7 +1054,7 @@ function tampilkanHalamanFavorit(){
   if(!container) return;
   
   if(favAnimals.length === 0){
-    container.innerHTML = '<div class="empty-result">Belum ada favorit. Klik ❤️ di detail hewan!</div>';
+    container.innerHTML = '<div class="empty-result">Belum ada favorit. Klik tambah favorit di detail hewan!</div>';
   } else {
     container.innerHTML = favAnimals.map(makeAnimalCard).join("");
   }
@@ -1076,7 +1077,7 @@ function tampilkanHalamanFavorit(){
 <div class="info-card"><h3>Kondisi Kandang</h3><p>${animal.kandang}</p></div>
 <div class="info-card"><h3>Pakan</h3><p>${animal.pakan}</p></div>
 <div class="info-card"><h3>Hal yang perlu diperhatikan</h3><p>${animal.perhatian}</p></div>
-      <div class="notice"><strong>Jangan menebak kebutuhan hewan.</strong> Pastikan suhu, kelembapan, UVB, pakan, dan ukuran kandang diperiksa dari panduan khusus spesies atau dokter hewan reptil.</div>${window.isAdmin && animal.cloud ? '<div class="detail-actions"><button class="secondary-btn" onclick="editHewan('+animal.id+')">✏️ Edit hewan</button><button class="secondary-btn" style="color:#d32f2f" onclick="hapusHewan('+animal.id+')">🗑 Hapus</button></div>' : ''}`;
+      <div class="notice"><strong>Jangan menebak kebutuhan hewan.</strong> Pastikan suhu, kelembapan, UVB, pakan, dan ukuran kandang diperiksa dari panduan khusus spesies atau dokter hewan reptil.</div>${window.isAdmin && animal.cloud ? '<div class="detail-actions"><button class="secondary-btn" onclick="editHewan('+animal.id+')">Edit hewan</button><button class="secondary-btn" style="color:#d32f2f" onclick="hapusHewan('+animal.id+')">Hapus</button></div>' : ''}`;
       showPage("detail");
 currentId = animal.id;
 updateTombolFavorit();
