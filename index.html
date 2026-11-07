@@ -277,16 +277,9 @@ html, body { overflow-x: hidden; max-width: 100%; }
     <section id="page-penyakit" class="page">
       <h1 class="page-title">Ensiklopedia Penyakit</h1>
       <p class="page-subtitle">Kenali gejala & obat umum. Wajib konsultasi dokter!</p>
-      <div id="menuPenyakit">
-        <button class="secondary-btn" onclick="tampilPenyakit('semua')">Semua</button>
-        <button class="secondary-btn" onclick="tampilPenyakit('leopard')">Leopard Gecko</button>
-        <button class="secondary-btn" onclick="tampilPenyakit('sulcata')">Sulcata</button>
-        <button class="secondary-btn" onclick="tampilPenyakit('iguana')">Iguana</button>
-        <button class="secondary-btn" onclick="tampilPenyakit('iguana')">Bearded Dragon</button>
-        <button class="secondary-btn" onclick="tampilPenyakit('iguana')">Corn Snake</button>
-        <button class="secondary-btn" onclick="tampilPenyakit('buaya')">Buaya</button>
-        <div id="listPenyakit" style="margin-top:16px"></div>
-      </div>
+      <button id="btnTambahPenyakit" class="primary-btn" style="display:none;width:100%;margin:4px 0 12px" onclick="openPenyakitModal()">＋ Tambah penyakit (admin)</button>
+      <div id="menuPenyakit" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+      <div id="listPenyakit" style="margin-top:16px"></div>
     </section>
     <section id="page-komunitas" class="page">
   <h1 class="page-title">Komunitas ReptilKu</h1>
@@ -483,6 +476,41 @@ html, body { overflow-x: hidden; max-width: 100%; }
       <button id="hwSimpan" class="primary-btn" style="flex:1" onclick="simpanHewan()">Simpan</button>
       <button class="secondary-btn" onclick="closeHewanModal()">Batal</button>
     </div>
+  </div>
+</div>
+<!-- MODAL PENYAKIT -->
+<div id="penyakitModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:999;align-items:flex-start;justify-content:center;padding:14px;overflow:auto">
+  <div style="background:#fdfbf7;width:100%;max-width:420px;border-radius:24px;padding:20px;margin:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <h3 id="pyJudul" style="margin:0">Tambah Penyakit 🩺</h3>
+      <button onclick="closePenyakitModal()" style="border:none;background:#eee;width:30px;height:30px;border-radius:50%">✕</button>
+    </div>
+    <label style="font-size:12px;font-weight:700">Nama penyakit *</label>
+    <input id="pyNama" class="kom-input" placeholder="Contoh: Shell Rot">
+    <label style="font-size:12px;font-weight:700">Hewan yang terkena *</label>
+    <input id="pyHewan" class="kom-input" placeholder="Pisahkan dengan koma, atau tap nama di bawah">
+    <div id="pyChips" style="display:flex;flex-wrap:wrap;gap:6px;margin:-2px 0 10px"></div>
+    <label style="font-size:12px;font-weight:700">Gejala / ciri</label>
+    <textarea id="pyCiri" class="kom-input" rows="3"></textarea>
+    <label style="font-size:12px;font-weight:700">Penyebab</label>
+    <textarea id="pyPenyebab" class="kom-input" rows="2"></textarea>
+    <label style="font-size:12px;font-weight:700">Obat / penanganan</label>
+    <textarea id="pyObat" class="kom-input" rows="3"></textarea>
+    <label style="font-size:12px;font-weight:700">Pencegahan</label>
+    <textarea id="pyCegah" class="kom-input" rows="3"></textarea>
+    <label style="font-size:12px;font-weight:700">Tingkat bahaya</label>
+    <select id="pyBahaya" class="kom-input"><option>Rendah</option><option selected>Sedang</option><option>Tinggi</option><option>Sangat Tinggi</option></select>
+    <div style="display:flex;gap:8px;margin-top:6px">
+      <button id="pySimpan" class="primary-btn" style="flex:1" onclick="simpanPenyakit()">Simpan</button>
+      <button class="secondary-btn" onclick="closePenyakitModal()">Batal</button>
+    </div>
+  </div>
+</div>
+<div id="penyakitDetail" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:999;align-items:flex-start;justify-content:center;padding:14px;overflow:auto">
+  <div style="background:#fdfbf7;width:100%;max-width:420px;border-radius:24px;padding:20px;margin:auto">
+    <div style="display:flex;justify-content:flex-end"><button onclick="tutupPenyakitDetail()" style="border:none;background:#eee;width:30px;height:30px;border-radius:50%">✕</button></div>
+    <div id="pdIsi" style="font-size:14px;line-height:1.5"></div>
+    <div id="pdAdmin" style="display:none;gap:8px;margin-top:14px"></div>
   </div>
 </div>
 <div id="profilModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:999;align-items:center;justify-content:center;padding:20px">
@@ -920,33 +948,81 @@ function catatShedding(petId){
   pencegahan: "Jangan gabung buaya beda ukuran, cek kandang jangan ada yang tajem"
 }
 ]
-function tampilPenyakit(filterHewan = "semua") {
-  const list = document.getElementById("listPenyakit");
-  list.innerHTML = "";
-  const filtered = penyakitReptil.filter(p => filterHewan === "semua" || p.hewan.toLowerCase().includes(filterHewan.toLowerCase()));
-  
-  filtered.forEach((p, i) => {
-    list.innerHTML += `
-      <div class="animal-card" style="margin-bottom:12px">
-        <div style="padding:16px">
-          <div style="font-weight:700; font-size:16px; color:#1b3a2d">${p.nama}</div>
-          <div style="font-size:12px; color:#6b7a75; margin:4px 0 8px 0">${p.hewan}</div>
-          <div style="font-size:13px; line-height:1.4">Ciri: ${p.ciri}</div>
-          <div style="font-size:13px; color:#d32f2f; font-weight:600; margin-top:6px">Bahaya: ${p.bahaya}</div>
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px">
-            <span style="background:#f0f4f0; padding:4px 10px; border-radius:999px; font-size:11px">Sakit</span>
-            <button onclick="openPenyakitDetail(${i})" style="background:#173d30; color:white; border:0; padding:6px 14px; border-radius:999px; font-size:12px; font-weight:600">Detail</button>
-          </div>
-        </div>
-      </div>
-    `;
-  });
+let penyakitFilter = "semua";
+const escP = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const brP = s => escP(s || "-").replace(/\n/g, "<br>");
+const namaHewanAsli = a => (a.raw && a.raw.name) || a.name;
+
+function semuaPenyakit() {
+  const bawaan = penyakitReptil.map(p => ({...p, obatUmum: p.obatUmum || p.obat || "-", cloud: false}));
+  return bawaan.concat(window.penyakitCloud || []);
 }
 
-function openPenyakitDetail(index) {
-  const p = penyakitReptil[index];
-  alert(`🩺 ${p.nama}\n\nHewan: ${p.hewan}\n\nCiri: ${p.ciri}\n\nBahaya: ${p.bahaya}\n\nOBAT UMUM:\n${p.obatUmum}\n\n---\nINI BUKAN RESEP! Wajib bawa ke dokter hewan reptil ya Mas.`);
+function cocokPenyakit(p, f) {
+  if (f === "semua") return true;
+  const h = String(p.hewan || "").toLowerCase();
+  const a = animals.find(x => namaHewanAsli(x) === f);
+  const kat = a ? String(a.category || "").toLowerCase() : "";
+  return h.includes(f.toLowerCase()) || h.includes("semua") || (kat && h.includes(kat));
 }
+
+function tampilPenyakit(f) {
+  if (typeof f === "string") penyakitFilter = f;
+  // tombol filter otomatis dari daftar hewan (termasuk hewan baru)
+  const menu = document.getElementById("menuPenyakit");
+  const nama = ["semua"].concat([...new Set(animals.map(namaHewanAsli))]);
+  menu.innerHTML = "";
+  nama.forEach(n => {
+    const b = document.createElement("button");
+    b.className = "secondary-btn";
+    b.textContent = n === "semua" ? "Semua" : n;
+    if (n === penyakitFilter) { b.style.background = "#173d30"; b.style.color = "#fff"; }
+    b.onclick = () => tampilPenyakit(n);
+    menu.appendChild(b);
+  });
+
+  const list = document.getElementById("listPenyakit");
+  window.penyakitTampil = semuaPenyakit().filter(p => cocokPenyakit(p, penyakitFilter));
+  if (!window.penyakitTampil.length) {
+    list.innerHTML = '<div style="padding:20px;text-align:center;color:#6b7a75;font-size:14px">Belum ada data penyakit untuk hewan ini.</div>';
+    return;
+  }
+  list.innerHTML = window.penyakitTampil.map((p, i) => `
+    <div class="animal-card" style="margin-bottom:12px">
+      <div style="padding:16px">
+        <div style="font-weight:700; font-size:16px; color:#1b3a2d">${escP(p.nama)}</div>
+        <div style="font-size:12px; color:#6b7a75; margin:4px 0 8px 0">${escP(p.hewan)}</div>
+        <div style="font-size:13px; line-height:1.4">Ciri: ${escP(p.ciri || "-")}</div>
+        <div style="font-size:13px; color:#d32f2f; font-weight:600; margin-top:6px">Bahaya: ${escP(p.bahaya || "-")}</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px">
+          <span style="background:#f0f4f0; padding:4px 10px; border-radius:999px; font-size:11px">Sakit</span>
+          <button onclick="openPenyakitDetail(${i})" style="background:#173d30; color:white; border:0; padding:6px 14px; border-radius:999px; font-size:12px; font-weight:600">Detail</button>
+        </div>
+      </div>
+    </div>`).join("");
+}
+
+function openPenyakitDetail(i) {
+  const p = (window.penyakitTampil || [])[i];
+  if (!p) return;
+  const bagian = (judul, isi) => isi ? `<div style="margin-top:10px"><b>${judul}</b><br>${brP(isi)}</div>` : "";
+  document.getElementById("pdIsi").innerHTML =
+    `<h3 style="margin:0 0 4px">🩺 ${escP(p.nama)}</h3>
+     <div style="font-size:12px;color:#6b7a75">${escP(p.hewan)}</div>
+     ${bagian("Ciri / gejala", p.ciri)}
+     ${bagian("Penyebab", p.penyebab)}
+     <div style="margin-top:10px;color:#d32f2f"><b>Bahaya:</b> ${escP(p.bahaya || "-")}</div>
+     ${bagian("Obat / penanganan umum", p.obatUmum)}
+     ${bagian("Pencegahan", p.pencegahan)}
+     <div style="margin-top:14px;font-size:12px;color:#888">INI BUKAN RESEP! Wajib bawa ke dokter hewan reptil.</div>`;
+  const adm = document.getElementById("pdAdmin");
+  if (window.isAdmin && p.cloud) {
+    adm.style.display = "flex";
+    adm.innerHTML = `<button class="secondary-btn" style="flex:1" onclick="editPenyakit(${i})">Edit</button><button class="secondary-btn" style="flex:1;color:#d32f2f" onclick="hapusPenyakit(${i})">Hapus</button>`;
+  } else { adm.style.display = "none"; adm.innerHTML = ""; }
+  document.getElementById("penyakitDetail").style.display = "flex";
+}
+function tutupPenyakitDetail() { document.getElementById("penyakitDetail").style.display = "none"; }
 
   let activeCategory = "Semua";
 
@@ -961,6 +1037,7 @@ function openPenyakitDetail(index) {
     window.scrollTo({ top: 0, behavior: "smooth" });
     if (pageName === "home" || pageName === "ensiklopedia") renderAnimals();
     if (pageName === "perawatan") renderPerawatan();
+    if (pageName === "penyakit") tampilPenyakit();
     if (pageName === "akun" || pageName === "favorit") tampilkanHalamanFavorit();
   }
 
@@ -1577,6 +1654,9 @@ function cekAdmin(u) {
   $('btnTambahHewan').style.display = window.isAdmin ? 'block' : 'none';
   const ba = document.getElementById('btn-admin');
   if (ba) ba.style.display = window.isAdmin ? 'block' : 'none';
+  const bp = document.getElementById('btnTambahPenyakit');
+  if (bp) bp.style.display = window.isAdmin ? 'block' : 'none';
+  if (window.tampilPenyakit) tampilPenyakit();
 }
 
 // Dashboard admin: hitung & daftar anggota dari koleksi 'users'
@@ -1711,6 +1791,82 @@ window.hapusHewan = async id => {
   if (!window.isAdmin || !a || !a.cloud) return;
   if (!confirm('Hapus "' + a.raw.name + '" dari aplikasi?')) return;
   try { await deleteDoc(doc(db, 'hewan', a.docId)); showPage('ensiklopedia'); }
+  catch (x) { alert('Gagal menghapus: ' + (x.code || x.message)); }
+};
+
+// ===== PENYAKIT (ADMIN) =====
+window.penyakitCloud = [];
+onSnapshot(collection(db, 'penyakit'), sn => {
+  window.penyakitCloud = sn.docs.map(d => ({...d.data(), docId: d.id, cloud: true}))
+    .sort((a, b) => ((a.createdAt && a.createdAt.seconds) || 0) - ((b.createdAt && b.createdAt.seconds) || 0));
+  if (window.tampilPenyakit) tampilPenyakit();
+}, e => console.warn('penyakit:', e.code));
+
+let pyEditId = null;
+function pyIsiChips() {
+  const box = $('pyChips'); box.innerHTML = '';
+  [...new Set(animals.map(a => (a.raw && a.raw.name) || a.name))].forEach(n => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.textContent = '+ ' + n;
+    b.style.cssText = 'border:1px solid #ddd;background:#fff;border-radius:999px;padding:4px 10px;font-size:12px';
+    b.onclick = () => {
+      const arr = $('pyHewan').value.split(',').map(x => x.trim()).filter(Boolean);
+      if (!arr.includes(n)) arr.push(n);
+      $('pyHewan').value = arr.join(', ');
+    };
+    box.appendChild(b);
+  });
+}
+function pyIsi(p) {
+  $('pyNama').value = p.nama || ''; $('pyHewan').value = p.hewan || '';
+  $('pyCiri').value = p.ciri || ''; $('pyPenyebab').value = p.penyebab || '';
+  $('pyObat').value = p.obatUmum || ''; $('pyCegah').value = p.pencegahan || '';
+  $('pyBahaya').value = p.bahaya || 'Sedang';
+  pyIsiChips();
+}
+window.openPenyakitModal = () => {
+  if (!window.isAdmin) return alert('Fitur ini hanya untuk admin.');
+  pyEditId = null; $('pyJudul').textContent = 'Tambah Penyakit 🩺';
+  pyIsi({hewan: (typeof penyakitFilter === 'string' && penyakitFilter !== 'semua') ? penyakitFilter : ''});
+  $('penyakitModal').style.display = 'flex';
+};
+window.editPenyakit = i => {
+  const p = (window.penyakitTampil || [])[i];
+  if (!window.isAdmin || !p || !p.cloud) return;
+  pyEditId = p.docId; $('pyJudul').textContent = 'Edit Penyakit ✏️'; pyIsi(p);
+  tutupPenyakitDetail();
+  $('penyakitModal').style.display = 'flex';
+};
+window.closePenyakitModal = () => { $('penyakitModal').style.display = 'none'; };
+window.simpanPenyakit = async () => {
+  if (!window.isAdmin) return alert('Fitur ini hanya untuk admin.');
+  const v = id => $(id).value.trim();
+  if (!v('pyNama')) return alert('Nama penyakit wajib diisi.');
+  if (!v('pyHewan')) return alert('Isi hewan yang terkena.');
+  const data = {
+    nama: v('pyNama').slice(0, 100), hewan: v('pyHewan').slice(0, 200),
+    ciri: v('pyCiri').slice(0, 2000), penyebab: v('pyPenyebab').slice(0, 2000),
+    obatUmum: v('pyObat').slice(0, 2000), pencegahan: v('pyCegah').slice(0, 2000),
+    bahaya: $('pyBahaya').value
+  };
+  const btn = $('pySimpan'); btn.disabled = true; btn.textContent = 'Menyimpan...';
+  try {
+    if (pyEditId) await updateDoc(doc(db, 'penyakit', pyEditId), data);
+    else await addDoc(collection(db, 'penyakit'), {...data, createdAt: serverTimestamp()});
+    closePenyakitModal();
+    alert('Penyakit berhasil disimpan.');
+  } catch (x) {
+    alert(x.code === 'permission-denied'
+      ? 'Ditolak: akun ini bukan admin, atau Firestore Rules untuk "penyakit" belum dipasang.'
+      : 'Gagal menyimpan: ' + (x.code || x.message));
+  }
+  btn.disabled = false; btn.textContent = 'Simpan';
+};
+window.hapusPenyakit = async i => {
+  const p = (window.penyakitTampil || [])[i];
+  if (!window.isAdmin || !p || !p.cloud) return;
+  if (!confirm('Hapus "' + p.nama + '"?')) return;
+  try { await deleteDoc(doc(db, 'penyakit', p.docId)); tutupPenyakitDetail(); }
   catch (x) { alert('Gagal menghapus: ' + (x.code || x.message)); }
 };
 
