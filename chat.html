@@ -8,8 +8,14 @@
     body { background: #0a3d1a; font-family: sans-serif; margin:0; }
     .header { background: #0a3d1a; color:white; padding:15px; text-align:center; }
     #chatBox { background: white; height: 70vh; overflow-y: auto; padding:15px; margin:10px; border-radius:15px; }
-    .pesan { margin-bottom:12px; }
-    .pesan b { color: #0a3d1a; }
+    .pesan { margin-bottom:10px; display:flex; flex-direction:column; }
+    .pesan.me { align-items:flex-end; }
+    .pesan.other { align-items:flex-start; }
+    .nama { font-size:12px; color:#777; margin:0 8px 2px; }
+    .bubble { max-width:75%; padding:10px 16px; border-radius:18px; word-wrap:break-word; }
+    .me .bubble { background:#0a84ff; color:#fff; border-bottom-right-radius:4px; }
+    .other .bubble { background:#f0f0f3; color:#000; border-bottom-left-radius:4px; }
+    .jam { font-size:10px; opacity:.6; margin:2px 8px 0; }
     .input-area { display:flex; padding:10px; background:white; margin:10px; border-radius:30px; }
     .input-area input { flex:1; border:none; outline:none; padding:10px; }
     .input-area button { background:#0a3d1a; color:white; border:none; padding:10px 20px; border-radius:20px; }
@@ -46,7 +52,16 @@
   const db = getFirestore(app);
   const auth = getAuth(app);
 
-  let namaSaya = "Mas ais";
+  // Nama disimpan di HP masing-masing (ditanya sekali saja)
+  let namaSaya = localStorage.getItem("namaSaya");
+  if (!namaSaya) {
+    namaSaya = (prompt("Masukkan nama kamu:") || "Anggota").trim() || "Anggota";
+    localStorage.setItem("namaSaya", namaSaya);
+  }
+
+  function esc(t) {
+    return String(t ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  }
   
   // Login anonim biar bisa chat
   signInAnonymously(auth);
@@ -62,8 +77,14 @@
       box.innerHTML = "";
       snapshot.forEach((doc) => {
         const data = doc.data();
-        const jam = data.waktu ? new Date(data.waktu.seconds*1000).toLocaleTimeString() : "baru";
-        box.innerHTML += `<div class="pesan"><b>${data.pengirim}</b> <small>(${jam})</small><br>${data.pesan}</div>`;
+        const isMine = data.senderId === auth.currentUser.uid;
+        const jam = data.waktu ? new Date(data.waktu.seconds*1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : "baru";
+        box.innerHTML += `
+          <div class="pesan ${isMine ? 'me' : 'other'}">
+            ${isMine ? "" : `<span class="nama">${esc(data.pengirim)}</span>`}
+            <div class="bubble">${esc(data.pesan)}</div>
+            <span class="jam">${jam}</span>
+          </div>`;
       });
       box.scrollTop = box.scrollHeight; // auto scroll bawah
     });
@@ -71,11 +92,12 @@
 
   window.kirimPesan = async function() {
     const input = document.getElementById('inputChat');
-    if(input.value.trim() == "") return;
+    if(input.value.trim() == "" || !auth.currentUser) return;
     
     await addDoc(collection(db, "chat_global"), {
+      senderId: auth.currentUser.uid,
       pengirim: namaSaya,
-      pesan: input.value,
+      pesan: input.value.trim(),
       waktu: serverTimestamp()
     });
     input.value = "";
