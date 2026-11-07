@@ -1,7 +1,7 @@
 // Service worker ReptilKu.
 // Naikkan angka versi ini setiap kali kamu mengubah file di daftar ASET.
-const VERSI = 'reptilku-v4';
-const ASET = ['./', './index.html', '. /pakan.html', './manifest.json'];
+const VERSI = 'reptilku-v5';
+const ASET = ['./', './index.html', '. /pakan.html', '. /toko.html', './manifest.json'];
 
 // Data hidup (login, database) tidak boleh disimpan di cache.
 const LEWATI = ['firestore.googleapis.com', 'identitytoolkit.googleapis.com', 'securetoken.googleapis.com', 'firebaseinstallations.googleapis.com'];
