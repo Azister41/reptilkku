@@ -119,7 +119,24 @@
         });
         alert('Tutup aplikasi sekarang. Notifikasi muncul sekitar 10 detik lagi.');
       };
-      (document.querySelector('main') || document.body).appendChild(b);
+      var wadah = document.querySelector('main') || document.body;
+      wadah.appendChild(b);
+
+      var c = document.createElement('button');
+      c.textContent = 'Cek jadwal yang terdaftar di HP';
+      c.style.cssText = b.style.cssText;
+      c.onclick = async function () {
+        try {
+          var p = await LN.getPending();
+          var n = (p.notifications || []);
+          if (!n.length) { alert('Belum ada jadwal terdaftar di HP ini.'); return; }
+          alert(n.length + ' jadwal terdaftar:\n' + n.slice(0, 8).map(function (x) {
+            var at = x.schedule && x.schedule.at ? new Date(x.schedule.at) : null;
+            return '- ' + x.title + ' \u2192 ' + (at && !isNaN(at) ? at.toLocaleString('id-ID') : '?');
+          }).join('\n'));
+        } catch (e) { alert('Gagal membaca jadwal: ' + e); }
+      };
+      wadah.appendChild(c);
     });
   }
 })();
