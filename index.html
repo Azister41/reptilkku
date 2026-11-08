@@ -340,6 +340,16 @@ html, body { overflow-x: hidden; max-width: 100%; }
       <h1 id="anggota-baru-count" style="margin:0; font-size:36px">0</h1>
       <small>Baru Hari Ini</small>
     </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:16px 0">
+  <div style="background:#FF6B00; color:white; padding:16px; border-radius:16px; text-align:center;">
+    <h1 id="total-pengunjung" style="margin:0; font-size:36px;">0</h1>
+    <small>Total Dibuka</small>
+  </div>
+  <div style="background:white; padding:16px; border-radius:16px; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,0.05)">
+    <h1 id="pengunjung-hari-ini" style="margin:0; color:#16372E; font-size:36px;">0</h1>
+    <small>Buka Hari Ini</small>
+  </div>
+  </div>
   </div>
 
   <div style="background:white; padding:16px; border-radius:16px; box-shadow:0 2px 8px rgba(0,0,0,0.05)">
@@ -1123,7 +1133,7 @@ if (validPages.includes(startPage)) showPage(startPage);
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import {getAuth,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,updateProfile} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import {getFirestore,collection,addDoc,query, where, orderBy,limit,onSnapshot,doc,updateDoc,deleteDoc,arrayUnion,arrayRemove,getDocs,getDoc,setDoc,serverTimestamp,Timestamp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import {getFirestore,collection,addDoc,query, where, orderBy,limit,onSnapshot,doc,updateDoc,deleteDoc,arrayUnion,arrayRemove,getDocs,getDoc,setDoc,serverTimestamp,Timestamp,increment} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 // GANTI dengan config dari Firebase Console
 const firebaseConfig = {
   apiKey: "AIzaSyDlcdAeCqeIf3FCYoDSGv4g3dnzo6-kkPA",
@@ -1189,6 +1199,33 @@ window.tutupBanner = function() {
   document.getElementById('banner-update').style.display = 'none';
   window.scrollTo({top: 0, behavior: 'smooth'});
 };
+
+// --- TRAFFIC: HITUNG YANG BUKA APP ---
+async function catatPengunjung() {
+  try {
+    const hariIni = new Date().toDateString();
+    if (localStorage.getItem('reptilku_udah_dihitung') === hariIni) return;
+
+    const refTraffic = doc(db, "statistik", "pengunjung");
+    const snap = await getDoc(refTraffic);
+
+    if (!snap.exists()) {
+      await setDoc(refTraffic, { total: 1, hariIni: 1, tanggal: hariIni });
+    } else {
+      const data = snap.data();
+      // Kalau tanggalnya beda, berarti udah ganti hari! Reset hariIni jadi 1!
+      if (data.tanggal !== hariIni) {
+        await updateDoc(refTraffic, { total: increment(1), hariIni: 1, tanggal: hariIni });
+      } else {
+        // Kalau masih hari yang sama, baru +1!
+        await updateDoc(refTraffic, { total: increment(1), hariIni: increment(1) });
+      }
+    }
+    localStorage.setItem('reptilku_udah_dihitung', hariIni);
+  } catch(e) { console.log("Gagal catat traffic", e); }
+}
+catatPengunjung();
+
 cekUpdateHewan();
 setInterval(cekUpdateHewan, 6 * 60 * 60 * 1000);
 // DENGERIN NOTIF REALTIME
@@ -1672,6 +1709,12 @@ function cekAdmin(u) {
 
 // Dashboard admin: hitung & daftar anggota dari koleksi 'users'
 window.hitungAnggota = async () => {
+  onSnapshot(doc(db, "statistik", "pengunjung"), (d) => {
+    if (!d.exists()) return;
+    const data = d.data();
+    document.getElementById('total-pengunjung').innerText = data.total || 0;
+    document.getElementById('pengunjung-hari-ini').innerText = data.hariIni || 0;
+  });
   if (!window.isAdmin) { alert('Login dulu sebagai admin.'); return; }
   try {
     const sn = await getDocs(collection(db, 'users'));
