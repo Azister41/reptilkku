@@ -1153,10 +1153,11 @@ localStorage.setItem('reptilku_versi_hewan', versiServer);
 function tampilkanNotifUpdate(pesan) {
   const teks = document.getElementById('teks-update');
   const banner = document.getElementById('banner-update');
-  if (teks) teks.innerText = pesan || "Hewan baru udah masuk!";
+  if (teks) teks.innerText = pesan || "Hewan baru udah ma<suk!";
   if (banner) banner.style.display = 'block';
   const badge = document.getElementById('badge-notif');
-  if (badge) { badge.style.display = 'block'; badge.innerText = "1"; }
+  jmlNotifHewan = 1;
+gambarNotif();
   if (navigator.vibrate) navigator.vibrate(200);
 
   // --- TAMBAHAN BARU: MASUKIN JUGA KE DAFTAR LONCENG ---
@@ -1170,12 +1171,9 @@ function tampilkanNotifUpdate(pesan) {
 }
 // Bikin badge ilang pas lonceng dipencet!
 function tutupBadgeNotif() {
-  const badge = document.getElementById('badge-notif');
-  if (badge) badge.style.display = 'none';
-  // Simpen biar pas refresh gak muncul lagi
-  localStorage.setItem('reptilku_notif_dibaca', '1');
+  jmlNotifHewan = 0; 
+  gambarNotif();     
 }
-
 // Cari tombol lonceng-nya, pasangin fungsi di atas!
 document.addEventListener('DOMContentLoaded', function() {
   // Coba 3 kemungkinan id lonceng-mu, salah satu pasti kena!
@@ -1197,6 +1195,7 @@ setInterval(cekUpdateHewan, 6 * 60 * 60 * 1000);
 let notifSosial = {n: 0, html: ""};
 let jmlPengingat = 0;
 let unsubPengingat = null;
+let jmlNotifHewan = 0;
 
 function gambarNotif() {
   const panel = document.getElementById('panel-notif');
@@ -1206,7 +1205,7 @@ function gambarNotif() {
     : "";
   const isi = barisPengingat + notifSosial.html;
   panel.innerHTML = isi || `<div style="text-align:center; padding:20px 0; color:#888;"><div style="margin-top:8px;">Belum ada notif</div></div>`;
-  const total = notifSosial.n + jmlPengingat;
+  const total = notifSosial.n + jmlPengingat + jmlNotifHewan;
   if (total > 0) { badge.style.display = 'block'; badge.innerText = total; }
   else { badge.style.display = 'none'; }
 }
