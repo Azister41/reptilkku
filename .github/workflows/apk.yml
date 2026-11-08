@@ -25,7 +25,7 @@ jobs:
           cp index.html www/index.html
       - run: npx cap add android
       - name: Fix Gradle biar gak 504
-        run: sed -i 's|gradle-8.2.1-all.zip|gradle-8.7-all.zip|g; s|github.com/gradle/gradle-distributions|services.gradle.org/distributions|g' android/gradle/wrapper/gradle-wrapper.properties
+        run: sed -i "s/8.2.1/8.7/g" android/gradle/wrapper/gradle-wrapper.properties
       - name: Izin notifikasi Android
         run: |
           M=android/app/src/main/AndroidManifest.xml
