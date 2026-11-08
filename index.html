@@ -1136,9 +1136,9 @@ const $ = id => document.getElementById(id);
 // ===== OTAK UPDATE 6 JAM =====
 async function cekUpdateHewan() {
   try {
-    const docVersi = await getDoc(doc(db, "meta", "versi_app"));
+    const docVersi = await getDoc(doc(db, "meta", "hewan"));
     if (!docVersi.exists()) return;
-    const versiServer = docVersi.data().versi_hewan;
+    const versiServer = docVersi.data().versi;
     const versiLokal = localStorage.getItem('reptilku_versi_hewan');
     if (versiLokal == versiServer) return;
     const snapshot = await getDocs(collection(db, "hewan"));
