@@ -1158,7 +1158,35 @@ function tampilkanNotifUpdate(pesan) {
   const badge = document.getElementById('badge-notif');
   if (badge) { badge.style.display = 'block'; badge.innerText = "1"; }
   if (navigator.vibrate) navigator.vibrate(200);
+
+  // --- TAMBAHAN BARU: MASUKIN JUGA KE DAFTAR LONCENG ---
+  const listNotif = document.getElementById('list-notif'); // <-- cek ID ini di kode-mu!
+  if (listNotif) {
+    const itemBaru = document.createElement('div');
+    itemBaru.style.cssText = "padding:10px; border-bottom:1px solid #eee; text-align:center; font-weight:bold;";
+    itemBaru.innerHTML = "🎉 " + (pesan || "Hewan baru udah masuk!");
+    listNotif.prepend(itemBaru);
+  }
 }
+// Bikin badge ilang pas lonceng dipencet!
+function tutupBadgeNotif() {
+  const badge = document.getElementById('badge-notif');
+  if (badge) badge.style.display = 'none';
+  // Simpen biar pas refresh gak muncul lagi
+  localStorage.setItem('reptilku_notif_dibaca', '1');
+}
+
+// Cari tombol lonceng-nya, pasangin fungsi di atas!
+document.addEventListener('DOMContentLoaded', function() {
+  // Coba 3 kemungkinan id lonceng-mu, salah satu pasti kena!
+  const btnLonceng = document.getElementById('btn-lonceng') 
+    || document.getElementById('icon-notif') 
+    || document.querySelector('[onclick*="Notif"]');
+  
+  if (btnLonceng) {
+    btnLonceng.addEventListener('click', tutupBadgeNotif);
+  }
+});
 window.tutupBanner = function() {
   document.getElementById('banner-update').style.display = 'none';
   window.scrollTo({top: 0, behavior: 'smooth'});
