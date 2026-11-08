@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
+    <head>
     <style>
     :root {
       --forest: #173d30;
@@ -164,7 +165,6 @@
 .link-btn{border:0;background:transparent;color:var(--leaf);font-weight:700;font-size:12px;width:100%;margin-top:8px}
 html, body { overflow-x: hidden; max-width: 100%; }
   </style>
-<head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#173d30">
@@ -584,59 +584,7 @@ html, body { overflow-x: hidden; max-width: 100%; }
   </div>
 </div>
 <script>
-    
-  // === FUNGSI HITUNG ANGGOTA UNTUK ADMIN ===
-async function hitungAnggota() {
-  if (!firebase.auth().currentUser) {
-    alert("Login dulu sebagai admin mas!");
-    return;
-  }
-
-  // Cek apakah yang login admin
-  const email = firebase.auth().currentUser.email;
-  if (email !== 'azister41@gmail.com') {
-    alert("Kamu admin!");
-    return;
-  }
-
-  try {
-    const snapshot = await db.collection('users').get();
-    const total = snapshot.size;
-    
-    // Tampilkan di halaman
-    document.getElementById('total-anggota').innerText = total;
-    
-    // Tampilkan list anggota terbaru
-    let html = "";
-    let baruHariIni = 0;
-    const today = new Date().toDateString();
-
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      const tgl = data.createdAt ? data.createdAt.toDate() : new Date();
-      if(tgl.toDateString() === today) baruHariIni++;
-
-      html += `
-        <div style="padding:12px 0; border-bottom:1px solid #eee; display:flex; justify-content:space-between">
-          <div>
-            <b>${data.email || '-'}</b><br>
-            <span style="font-size:11px; color:#888">UID: ${doc.id.substring(0,8)}... | ${tgl.toLocaleDateString('id-ID')}</span>
-          </div>
-          <span style="font-size:10px; background:#16372E; color:white; padding:4px 8px; border-radius:10px; height:fit-content">Member</span>
-        </div>
-      `;
-    });
-
-    document.getElementById('list-anggota-baru').innerHTML = html;
-    document.getElementById('anggota-baru-count').innerText = baruHariIni;
-
-    console.log("Total anggota:", total);
-  } catch (e) {
-    console.error(e);
-    alert("Gagal hitung anggota: " + e.message + "\nPastikan sudah Publish Rules tadi!");
-  }
-}
-
+            
 // Biar badge notif muncul otomatis di menu Akun
 if (typeof firebase !== 'undefined') firebase.auth().onAuthStateChanged(user => {
   if(user && user.email === 'azister41@gmail.com'){
@@ -1997,44 +1945,6 @@ function hitungJarak(lat1, lon1, lat2, lon2) {
     setTimeout(cekDanTampilkanAdmin, 2000);
   });
 
-  // === FUNGSI HITUNG ANGGOTA ===
-  async function hitungAnggota() {
-    cekDanTampilkanAdmin(); // cek lagi pas klik dashboard
-    if (!firebase.auth().currentUser) {
-      alert("Login dulu sebagai admin mas!");
-      return;
-    }
-    try {
-      const snapshot = await firebase.firestore().collection('users').get();
-      const total = snapshot.size;
-      const elTotal = document.getElementById('total-anggota');
-      if(elTotal) elTotal.innerText = total;
-      
-      const countEl = document.getElementById('anggota-baru-count');
-      if(countEl) countEl.innerText = total;
-
-      let html = "";
-      let baruHariIni = 0;
-      const today = new Date().toDateString();
-
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        const tgl = data.createdAt ? data.createdAt.toDate() : new Date();
-        if(tgl.toDateString() === today) baruHariIni++;
-        html += `
-          <div style="padding:12px 0; border-bottom:1px solid #eee; display:flex; justify-content:space-between">
-            <div><b>${data.email || '-'}</b><br>
-            <span style="font-size:11px; color:#888">UID: ${doc.id.substring(0,8)}... | ${tgl.toLocaleDateString('id-ID')}</span></div>
-            <span style="font-size:10px; background:#16372E; color:white; padding:4px 8px; border-radius:10px; height:fit-content">Member</span>
-          </div>`;
-      });
-      
-      document.getElementById('list-anggota-baru').innerHTML = html;
-      const baruEl = document.getElementById('baru-hari-ini');
-      if(baruEl) baruEl.innerText = baruHariIni;
-
-    } catch(e) { alert("Error: " + e.message); console.log(e); }
-  }
 </script>
 <script src="notif.js"></script>
 </body>
