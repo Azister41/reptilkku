@@ -1145,14 +1145,16 @@ async function cekUpdateHewan() {
     const listBaru = [];
     snapshot.forEach(d => listBaru.push({id: d.id, ...d.data()}));
     localStorage.setItem('reptilku_data_hewan', JSON.stringify(listBaru));
-    localStorage.setItem('reptilku_versi_hewan', versiServer);
-    tampilkanNotifUpdate(docVersi.data().terakhir_update);
+tampilkanNotifUpdate(docVersi.data().terakhir_update);
+localStorage.setItem('reptilku_versi_hewan', versiServer);
     if (typeof tampilkanHewan === 'function') tampilkanHewan(listBaru);
   } catch(e) { console.log("Gagal cek update", e); }
 }
 function tampilkanNotifUpdate(pesan) {
-  document.getElementById('teks-update').innerText = pesan || "Hewan baru udah masuk!";
-  document.getElementById('banner-update').style.display = 'block';
+  const teks = document.getElementById('teks-update');
+  const banner = document.getElementById('banner-update');
+  if (teks) teks.innerText = pesan || "Hewan baru udah masuk!";
+  if (banner) banner.style.display = 'block';
   const badge = document.getElementById('badge-notif');
   if (badge) { badge.style.display = 'block'; badge.innerText = "1"; }
   if (navigator.vibrate) navigator.vibrate(200);
