@@ -452,7 +452,7 @@ html, body { overflow-x: hidden; max-width: 100%; }
     </div>
     <label style="font-size:12px;font-weight:700">Foto</label>
     <img id="hwPreview" alt="Pratinjau" style="display:none;width:100%;height:160px;object-fit:cover;border-radius:14px;margin:6px 0">
-    <input id="hwFoto" class="kom-input" type="file" accept="image/*" onchange="hwPilihFoto(this)">
+    <input id="hwLink" class="kom-input" type="url" inputmode="url" placeholder="Tempel link foto (https://...)" oninput="hwLinkFoto(this.value)">
     <div id="hwInfoFoto" style="font-size:11px;color:#78847b;margin:-4px 0 10px"></div>
     <label style="font-size:12px;font-weight:700">Nama hewan</label>
     <input id="hwNama" class="kom-input" placeholder="Contoh: Leopard Gecko">
@@ -1255,7 +1255,7 @@ onAuthStateChanged(auth, (user) => {
 // === CHAT iPHONE STYLE ===
 const TUJUH_HARI = 7*24*60*60*1000;
 const qChat = query(collection(db, "chat_global"),
-  where("waktu", ">", Timestamp.fromMillis(Date.now() - TUJUH_HARI)), orderBy("waktu"));
+  where("waktu", ">", Timestamp.fromMillis(Date.now() - TUJUH_HARI)), orderBy("waktu", "desc"), limit(100));
 let chatDocs = [];
 function renderChat() {
   const box = document.getElementById('chatBox');
@@ -1288,7 +1288,7 @@ function renderChat() {
   box.scrollTop = box.scrollHeight;
 }
 onSnapshot(qChat, (snap) => {
-  chatDocs = snap.docs.map(d => ({id: d.id, ...d.data()}));
+  chatDocs = snap.docs.map(d => ({id: d.id, ...d.data()})).reverse(); // urut lama ke baru
   renderChat();
 });
 // render ulang saat status login berubah (login/logout/ganti nama)
@@ -1632,13 +1632,43 @@ window.hitungAnggota = async () => {
   } catch (e) { alert('Gagal memuat anggota: ' + e.message); }
 };
 
-// Hewan dari Firestore digabung ke daftar bawaan
-onSnapshot(query(collection(db, 'hewan'), orderBy('nid')), s => {
+// ===== Hewan: unduh sekali, simpan di HP (IndexedDB) =====
+const CEK_SETIAP_MS = 6 * 3600 * 1000; // cek versi data maksimal tiap 6 jam
+
+function idb() {
+  return new Promise((ok, gagal) => {
+    const r = indexedDB.open('reptilku-cache', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('kv');
+    r.onsuccess = () => ok(r.result);
+    r.onerror = () => gagal(r.error);
+  });
+}
+async function idbGet(k) {
+  try {
+    const d = await idb();
+    return await new Promise(ok => {
+      const q = d.transaction('kv').objectStore('kv').get(k);
+      q.onsuccess = () => ok(q.result);
+      q.onerror = () => ok(undefined);
+    });
+  } catch { return undefined; }
+}
+async function idbSet(k, v) {
+  try {
+    const d = await idb();
+    await new Promise(ok => {
+      const t = d.transaction('kv', 'readwrite');
+      t.objectStore('kv').put(v, k);
+      t.oncomplete = ok; t.onerror = ok;
+    });
+  } catch {}
+}
+
+function terapkanHewan(list) {
   for (let i = animals.length - 1; i >= 0; i--) if (animals[i].cloud) animals.splice(i, 1);
-  s.docs.forEach(d => {
-    const h = d.data();
+  list.forEach(h => {
     animals.push({
-      id: h.nid, docId: d.id, cloud: true, raw: h,
+      id: h.nid, docId: h.docId, cloud: true, raw: h,
       name: esc(h.name || ''), latin: esc(h.latin || ''), category: h.category || 'Kadal',
       level: h.level || '', emoji: EMOJI_KAT[h.category] || '🦎', image: h.image || '',
       about: fmt(h.about), perawatan: fmt(h.perawatan), kandang: fmt(h.kandang),
@@ -1646,42 +1676,35 @@ onSnapshot(query(collection(db, 'hewan'), orderBy('nid')), s => {
     });
   });
   renderAnimals();
-}, err => console.warn('Gagal memuat hewan:', err.code));
-
-// Kecilkan foto: maks 800 px, JPEG, di bawah ~300 KB
-function kecilkanFoto(file, maks = 800) {
-  return new Promise((ok, gagal) => {
-    const r = new FileReader();
-    r.onerror = () => gagal(new Error('Foto tidak bisa dibaca.'));
-    r.onload = () => {
-      const img = new Image();
-      img.onerror = () => gagal(new Error('File itu bukan gambar.'));
-      img.onload = () => {
-        const k = Math.min(1, maks / Math.max(img.width, img.height));
-        const c = document.createElement('canvas');
-        c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
-        const g = c.getContext('2d');
-        g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
-        g.drawImage(img, 0, 0, c.width, c.height);
-        let q = 0.8, d = c.toDataURL('image/jpeg', q);
-        while (d.length > 400000 && q > 0.4) { q -= 0.1; d = c.toDataURL('image/jpeg', q); }
-        d.length > 400000 ? gagal(new Error('Foto terlalu besar, coba foto lain.')) : ok(d);
-      };
-      img.src = r.result;
-    };
-    r.readAsDataURL(file);
-  });
 }
 
-window.hwPilihFoto = async input => {
-  const f = input.files && input.files[0];
-  if (!f) return;
-  $('hwInfoFoto').textContent = 'Memproses foto...';
+async function syncHewan(paksa = false) {
+  const simpan = await idbGet('hewan');
+  if (simpan && simpan.data) terapkanHewan(simpan.data); // tampil langsung dari HP
+  const cekTerakhir = Number(localStorage.getItem('reptilku_hewan_cek') || 0);
+  if (!paksa && simpan && Date.now() - cekTerakhir < CEK_SETIAP_MS) return;
   try {
-    hwFoto = await kecilkanFoto(f);
-    $('hwPreview').src = hwFoto; $('hwPreview').style.display = 'block';
-    $('hwInfoFoto').textContent = 'Foto siap (±' + Math.round(hwFoto.length * 0.75 / 1024) + ' KB).';
-  } catch (x) { hwFoto = ''; $('hwInfoFoto').textContent = x.message; }
+    const m = await getDoc(doc(db, 'meta', 'hewan'));
+    const versi = m.exists() ? (m.data().versi || 0) : 0;
+    localStorage.setItem('reptilku_hewan_cek', String(Date.now()));
+    if (!paksa && simpan && simpan.versi === versi) return;
+    const sn = await getDocs(query(collection(db, 'hewan'), orderBy('nid')));
+    const data = sn.docs.map(d => { const { createdAt, ...isi } = d.data(); return { ...isi, docId: d.id }; });
+    await idbSet('hewan', { versi, data });
+    terapkanHewan(data);
+  } catch (e) { console.warn('Sinkron hewan gagal:', e.code || e.message); }
+}
+window.syncHewan = syncHewan;
+syncHewan();
+
+// Foto lewat link (hemat Firestore). Pakai link langsung dari hosting gambar, misalnya postimg.cc
+window.hwLinkFoto = url => {
+  const u = (url || '').trim();
+  if (!u) { hwFoto = ''; $('hwPreview').style.display = 'none'; $('hwInfoFoto').textContent = ''; return; }
+  if (!/^https:\/\/[^\s"'<>]+$/i.test(u)) { hwFoto = ''; $('hwInfoFoto').textContent = 'Link harus diawali https:// dan tanpa spasi.'; return; }
+  hwFoto = u;
+  $('hwPreview').src = u; $('hwPreview').style.display = 'block';
+  $('hwInfoFoto').textContent = 'Pastikan pratinjau muncul. Pakai link langsung ke gambar (berakhiran .jpg, .png, atau .webp).';
 };
 
 function hwIsi(h) {
@@ -1690,9 +1713,10 @@ function hwIsi(h) {
   $('hwAbout').value = h.about || ''; $('hwPerawatan').value = h.perawatan || '';
   $('hwKandang').value = h.kandang || ''; $('hwPakan').value = h.pakan || ''; $('hwPerhatian').value = h.perhatian || '';
   hwFoto = h.image || '';
+  const fotoLama = hwFoto.startsWith('data:');
+  $('hwLink').value = fotoLama ? '' : hwFoto;
   $('hwPreview').src = hwFoto; $('hwPreview').style.display = hwFoto ? 'block' : 'none';
-  $('hwInfoFoto').textContent = hwFoto ? 'Foto lama dipakai. Pilih foto baru untuk menggantinya.' : '';
-  $('hwFoto').value = '';
+  $('hwInfoFoto').textContent = fotoLama ? 'Foto lama dipakai. Tempel link baru untuk menggantinya.' : '';
 }
 
 window.openHewanModal = () => {
@@ -1712,7 +1736,7 @@ window.simpanHewan = async () => {
   if (!window.isAdmin) return alert('Fitur ini hanya untuk admin.');
   const v = id => $(id).value.trim();
   if (!v('hwNama')) return alert('Nama hewan wajib diisi.');
-  if (!hwFoto) return alert('Pilih foto dulu.');
+  if (!hwFoto) return alert('Tempel link foto dulu.');
   const data = {
     name: v('hwNama').slice(0, 80), latin: v('hwLatin').slice(0, 80),
     category: $('hwKategori').value, level: $('hwLevel').value, image: hwFoto,
@@ -1724,6 +1748,8 @@ window.simpanHewan = async () => {
   try {
     if (hwEditId) await updateDoc(doc(db, 'hewan', hwEditId), data);
     else await addDoc(collection(db, 'hewan'), {...data, nid: Date.now(), createdAt: serverTimestamp()});
+    await setDoc(doc(db, 'meta', 'hewan'), {versi: Date.now()});
+    await syncHewan(true);
     closeHewanModal();
     alert('Hewan berhasil disimpan.');
   } catch (x) {
@@ -1738,17 +1764,46 @@ window.hapusHewan = async id => {
   const a = animals.find(x => x.id === id);
   if (!window.isAdmin || !a || !a.cloud) return;
   if (!confirm('Hapus "' + a.raw.name + '" dari aplikasi?')) return;
-  try { await deleteDoc(doc(db, 'hewan', a.docId)); showPage('ensiklopedia'); }
+  try {
+    await deleteDoc(doc(db, 'hewan', a.docId));
+    await setDoc(doc(db, 'meta', 'hewan'), {versi: Date.now()});
+    await syncHewan(true);
+    showPage('ensiklopedia');
+  }
   catch (x) { alert('Gagal menghapus: ' + (x.code || x.message)); }
 };
 
 // ===== PENYAKIT (ADMIN) =====
 window.penyakitCloud = [];
-onSnapshot(collection(db, 'penyakit'), sn => {
-  window.penyakitCloud = sn.docs.map(d => ({...d.data(), docId: d.id, cloud: true}))
+
+function terapkanPenyakit(list) {
+  window.penyakitCloud = list.map(p => ({...p, cloud: true}))
     .sort((a, b) => ((a.createdAt && a.createdAt.seconds) || 0) - ((b.createdAt && b.createdAt.seconds) || 0));
   if (window.tampilPenyakit) tampilPenyakit();
-}, e => console.warn('penyakit:', e.code));
+}
+
+// Sama seperti hewan: unduh sekali, simpan di HP, cek versi di meta/penyakit
+async function syncPenyakit(paksa = false) {
+  const simpan = await idbGet('penyakit');
+  if (simpan && simpan.data) terapkanPenyakit(simpan.data);
+  const cekTerakhir = Number(localStorage.getItem('reptilku_penyakit_cek') || 0);
+  if (!paksa && simpan && Date.now() - cekTerakhir < CEK_SETIAP_MS) return;
+  try {
+    const m = await getDoc(doc(db, 'meta', 'penyakit'));
+    const versi = m.exists() ? (m.data().versi || 0) : 0;
+    localStorage.setItem('reptilku_penyakit_cek', String(Date.now()));
+    if (!paksa && simpan && simpan.versi === versi) return;
+    const sn = await getDocs(collection(db, 'penyakit'));
+    const data = sn.docs.map(d => {
+      const x = d.data();
+      return {...x, createdAt: x.createdAt ? {seconds: x.createdAt.seconds} : null, docId: d.id};
+    });
+    await idbSet('penyakit', {versi, data});
+    terapkanPenyakit(data);
+  } catch (e) { console.warn('Sinkron penyakit gagal:', e.code || e.message); }
+}
+window.syncPenyakit = syncPenyakit;
+syncPenyakit();
 
 let pyEditId = null;
 function pyIsiChips() {
@@ -1801,6 +1856,8 @@ window.simpanPenyakit = async () => {
   try {
     if (pyEditId) await updateDoc(doc(db, 'penyakit', pyEditId), data);
     else await addDoc(collection(db, 'penyakit'), {...data, createdAt: serverTimestamp()});
+    await setDoc(doc(db, 'meta', 'penyakit'), {versi: Date.now()});
+    await syncPenyakit(true);
     closePenyakitModal();
     alert('Penyakit berhasil disimpan.');
   } catch (x) {
@@ -1814,7 +1871,12 @@ window.hapusPenyakit = async i => {
   const p = (window.penyakitTampil || [])[i];
   if (!window.isAdmin || !p || !p.cloud) return;
   if (!confirm('Hapus "' + p.nama + '"?')) return;
-  try { await deleteDoc(doc(db, 'penyakit', p.docId)); tutupPenyakitDetail(); }
+  try {
+    await deleteDoc(doc(db, 'penyakit', p.docId));
+    await setDoc(doc(db, 'meta', 'penyakit'), {versi: Date.now()});
+    await syncPenyakit(true);
+    tutupPenyakitDetail();
+  }
   catch (x) { alert('Gagal menghapus: ' + (x.code || x.message)); }
 };
 
