@@ -175,22 +175,40 @@ html, body { overflow-x: hidden; max-width: 100%; }
   <title>ReptilKu - Kenali, Rawat, Sayangi</title>
   </head>
 <body>
- <!-- BANNER UPDATE - SEMBUNYI DULU, MUNCUL KALO ADA UPDATE -->
-<div id="banner-update" style="display:none; position:fixed; top:12px; left:12px; right:12px; z-index:9999; background:rgba(20,20,20,0.95); backdrop-filter:blur(10px); border:1px solid #FFC107; border-radius:16px; padding:12px; box-shadow:0 10px 30px rgba(0,0,0,0.5); align-items:center; gap:12px; animation:slideDown 0.4s ease;">
-  
-  <div style="width:48px; height:48px; min-width:48px; background:#FFC107; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:26px;">🦎</div>
-
-  <div style="flex:1; min-width:0;">
-    <div style="color:#FFC107; font-size:11px; font-weight:800; letter-spacing:1px;">REPTILKU • BARU!</div>
-    <div id="teks-update" style="color:white; font-size:14px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Ada hewan baru masuk!</div>
+ <!-- POPUP HEWAN BARU - SEMBUNYI DULU, MUNCUL KALO ADA UPDATE -->
+<div id="banner-update" role="dialog" aria-modal="true" aria-labelledby="popup-judul" onclick="if(event.target===this)sembunyikanBanner()">
+  <div class="pu-card">
+    <img class="pu-img" src="https://i.postimg.cc/2SX2rK9q/1794000275089-picsay-copy-608x760-picsay.png" alt="Buaya lucu">
+    <h2 id="popup-judul" class="pu-title">Hewan Baru Ditambahkan</h2>
+    <p class="pu-sub">silahkan menikmati aplikasi kami</p>
+    <button class="pu-btn" onclick="tutupBanner()">OKE</button>
   </div>
-
-  <button onclick="tutupBanner()" style="background:#FFC107; color:black; border:none; padding:8px 14px; border-radius:20px; font-weight:800; font-size:13px; white-space:nowrap;">Lihat 👀</button>
-  
-  <button onclick="document.getElementById('banner-update').style.display='none'" style="background:none; border:none; color:#888; font-size:16px; padding:4px;">✕</button>
 </div>
 
 <style>
+#banner-update{
+  display:none; position:fixed; inset:0; z-index:9999;
+  align-items:center; justify-content:center; padding:24px;
+  background:rgba(23,61,48,.25); backdrop-filter:blur(2px);
+  animation:puFade .25s ease;
+}
+#banner-update.keluar{ opacity:0; transition:opacity .2s ease; }
+#banner-update .pu-card{
+  width:100%; max-width:340px; background:#fff; border-radius:24px;
+  padding:28px 24px 24px; text-align:center;
+  box-shadow:0 18px 50px rgba(0,0,0,.18);
+  animation:puPop .3s cubic-bezier(.2,.9,.3,1.2);
+}
+#banner-update .pu-img{ width:190px; max-width:70%; height:auto; display:block; margin:0 auto 14px; }
+#banner-update .pu-title{ margin:0 0 6px; font-size:21px; font-weight:800; color:#222; }
+#banner-update .pu-sub{ margin:0 0 20px; font-size:15px; color:#555; }
+#banner-update .pu-btn{
+  width:100%; border:0; border-radius:999px; padding:14px 0;
+  background:#173d30; color:#fff; font-size:16px; font-weight:800; letter-spacing:.3px; cursor:pointer;
+}
+#banner-update .pu-btn:active{ transform:scale(.98); }
+@keyframes puFade{ from{opacity:0} to{opacity:1} }
+@keyframes puPop{ from{transform:scale(.85);opacity:0} to{transform:scale(1);opacity:1} }
 @keyframes slideDown {
   from { transform: translateY(-100%); opacity:0; }
   to { transform: translateY(0); opacity:1; }
@@ -1179,8 +1197,8 @@ localStorage.setItem('reptilku_versi_hewan', versiServer);
 function tampilkanNotifUpdate(pesan) {
   const teks = document.getElementById('teks-update');
   const banner = document.getElementById('banner-update');
-  if (teks) teks.innerText = pesan || "Hewan baru udah ma<suk!";
-  if (banner) banner.style.display = 'block';
+  if (teks) teks.innerText = pesan || "Hewan baru udah masuk!";
+  if (banner) tampilkanBanner();
   const badge = document.getElementById('badge-notif');
   jmlNotifHewan = 1;
 gambarNotif();
@@ -1211,10 +1229,19 @@ document.addEventListener('DOMContentLoaded', function() {
     btnLonceng.addEventListener('click', tutupBadgeNotif);
   }
 });
-window.tutupBanner = function() {
-  document.getElementById('banner-update').style.display = 'none';
-  window.scrollTo({top: 0, behavior: 'smooth'});
+function tampilkanBanner() {
+  const b = document.getElementById('banner-update');
+  if (!b) return;
+  b.classList.remove('keluar');
+  b.style.display = 'flex';
+}
+window.sembunyikanBanner = function() {
+  const b = document.getElementById('banner-update');
+  if (!b) return;
+  b.classList.add('keluar');
+  setTimeout(() => { b.style.display = 'none'; b.classList.remove('keluar'); }, 200);
 };
+window.tutupBanner = function() { sembunyikanBanner(); };
 
 // --- TRAFFIC: HITUNG YANG BUKA APP ---
 async function catatPengunjung() {
