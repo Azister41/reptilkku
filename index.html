@@ -516,6 +516,8 @@ html, body { overflow-x: hidden; max-width: 100%; }
     <img id="hwPreview" alt="Pratinjau" style="display:none;width:100%;height:160px;object-fit:cover;border-radius:14px;margin:6px 0">
     <input id="hwFoto" class="kom-input" type="file" accept="image/*" onchange="hwPilihFoto(this)">
     <div id="hwInfoFoto" style="font-size:11px;color:#78847b;margin:-4px 0 10px"></div>
+    <button id="hwAIBtn" type="button" class="secondary-btn" style="width:100%;margin:0 0 6px" onclick="hwAI()">✨ Isi otomatis dari foto (AI)</button>
+    <div style="font-size:11px;color:#78847b;margin:0 0 12px">Hasil AI hanya perkiraan, periksa dulu sebelum Simpan. <a href="#" onclick="hwAIGantiKey();return false">Ganti API key</a></div>
     <label style="font-size:12px;font-weight:700">Nama hewan</label>
     <input id="hwNama" class="kom-input" placeholder="Contoh: Leopard Gecko">
     <label style="font-size:12px;font-weight:700">Nama latin</label>
@@ -1893,6 +1895,59 @@ window.hwPilihFoto = async input => {
     $('hwPreview').src = hwFoto; $('hwPreview').style.display = 'block';
     $('hwInfoFoto').textContent = 'Foto siap (±' + Math.round(hwFoto.length * 0.75 / 1024) + ' KB).';
   } catch (x) { hwFoto = ''; $('hwInfoFoto').textContent = x.message; }
+};
+
+// ===== ISI OTOMATIS DARI FOTO (AI GEMINI, KHUSUS ADMIN) =====
+// API key Gemini (gratis dari aistudio.google.com) ditempel sekali dan disimpan hanya di HP admin.
+const HW_AI_MODEL = 'gemini-2.5-flash';
+window.hwAIGantiKey = () => {
+  const k = (prompt('Tempel API key Gemini (gratis dari aistudio.google.com). Disimpan di HP ini saja.') || '').trim();
+  if (k) localStorage.setItem('reptilku_gemini', k);
+  return k;
+};
+window.hwAI = async () => {
+  if (!window.isAdmin) return alert('Fitur ini hanya untuk admin.');
+  if (!hwFoto || hwFoto.indexOf('data:image') !== 0) return alert('Pilih foto hewan dulu.');
+  let key = localStorage.getItem('reptilku_gemini') || '';
+  if (!key) { key = window.hwAIGantiKey(); if (!key) return; }
+  if ($('hwNama').value.trim() && !confirm('Kolom yang sudah terisi akan diganti hasil AI. Lanjut?')) return;
+  const btn = $('hwAIBtn'); btn.disabled = true; btn.textContent = 'AI sedang membaca foto...';
+  const perintah = 'Kamu ahli herpetologi. Lihat foto reptil ini lalu isi data ensiklopedia untuk aplikasi pemula berbahasa Indonesia. ' +
+    'Jawab HANYA dengan JSON berkunci: name (nama umum yang populer), latin (nama ilmiah), ' +
+    'category (tepat salah satu: Ular, Kura-Kura, Kadal, Buaya), level (tepat salah satu: Pemula, Menengah, Lanjutan), ' +
+    'about (2-4 kalimat tentang spesies), perawatan (3-5 poin ringkas, satu poin per baris), ' +
+    'kandang (suhu, kelembapan, ukuran kandang, substrat, dekorasi), pakan (jenis pakan dan frekuensi), ' +
+    'perhatian (risiko, penyakit umum, status dilindungi/legalitas bila ada). ' +
+    'Jika tidak yakin spesiesnya, tulis tebakan terbaik di name dan latin, dan awali about dengan "(Perlu dicek: spesies belum pasti.)". ' +
+    'Jangan mengarang fakta; jika tidak tahu, tulis singkat bahwa perlu diverifikasi.';
+  try {
+    const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + HW_AI_MODEL + ':generateContent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+      body: JSON.stringify({
+        contents: [{ parts: [{ inline_data: { mime_type: 'image/jpeg', data: hwFoto.split(',')[1] } }, { text: perintah }] }],
+        generationConfig: { responseMimeType: 'application/json' }
+      })
+    });
+    const data = await res.json();
+    if (data.error) {
+      if (/API key|API_KEY/i.test(data.error.message || '')) localStorage.removeItem('reptilku_gemini');
+      throw new Error(data.error.message || 'Permintaan ditolak');
+    }
+    const teks = (data.candidates && data.candidates[0].content.parts.map(p => p.text || '').join('')) || '';
+    const h = JSON.parse(teks.replace(/```json|```/g, '').trim());
+    const t = v => (Array.isArray(v) ? v.join('\n') : String(v || '')).trim();
+    $('hwNama').value = t(h.name).slice(0, 80);
+    $('hwLatin').value = t(h.latin).slice(0, 80);
+    if (['Ular', 'Kura-Kura', 'Kadal', 'Buaya'].includes(h.category)) $('hwKategori').value = h.category;
+    if (['Pemula', 'Menengah', 'Lanjutan'].includes(h.level)) $('hwLevel').value = h.level;
+    $('hwAbout').value = t(h.about); $('hwPerawatan').value = t(h.perawatan);
+    $('hwKandang').value = t(h.kandang); $('hwPakan').value = t(h.pakan); $('hwPerhatian').value = t(h.perhatian);
+    $('hwInfoFoto').textContent = 'Terisi oleh AI. Periksa dulu sebelum menekan Simpan.';
+  } catch (x) {
+    alert('AI gagal: ' + (x.message || x));
+  }
+  btn.disabled = false; btn.textContent = '✨ Isi otomatis dari foto (AI)';
 };
 
 function hwIsi(h) {
