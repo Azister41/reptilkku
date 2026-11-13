@@ -449,15 +449,27 @@ html, body { overflow-x: hidden; max-width: 100%; }
 <div style="border-top:1px solid #eee;margin-top:16px;padding-top:16px">
   <p style="font-weight:700;color:#16372E;margin-bottom:10px;font-size:14px">Aplikasi Kami Lainnya</p>
 
-  <a href="https://azister41.github.io/morphku/" style="text-decoration:none;display:flex;gap:12px;align-items:center;background:#FFF7ED;border:1px solid #FFE0B2;border-radius:16px;padding:12px">
+  <a href="https://azister41.github.io/morphku/" target="_blank" rel="noopener" onclick="bukaMorphku(event)" style="text-decoration:none;display:flex;gap:12px;align-items:center;background:#FFF7ED;border:1px solid #FFE0B2;border-radius:16px;padding:12px">
     <img src="morphku.png" style="width:48px;height:48px;border-radius:12px;object-fit:cover">
     <div style="flex:1">
       <b style="color:#222;font-size:14px">Morphku - Kalkulator Morph</b>
-      <p style="color:#666;font-size:12px;margin:2px 0 0">Hitung hasil anakan Gecko & Ball Python</p>
+      <p style="color:#666;font-size:12px;margin:2px 0 0">Hitung hasil anakan Gecko &amp; Ball Python</p>
     </div>
     <span style="background:#FF7A00;color:#fff;font-size:11px;font-weight:bold;padding:6px 10px;border-radius:20px">BUKA</span>
   </a>
 </div>
+<script>
+// Buka Morphku di Chrome (bukan di dalam WebView APK) supaya login Google jalan
+function bukaMorphku(e){
+  e.preventDefault();
+  var url = "https://azister41.github.io/morphku/";
+  try{
+    var AL = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AppLauncher;
+    if (AL && AL.openUrl){ AL.openUrl({ url: url }); return; }
+  }catch(err){}
+  window.open(url, "_blank", "noopener");
+}
+</script>
   </section>
     <div id="modal-qris" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:99999; justify-content:center; align-items:center; padding:20px" onclick="tutupQris()">
     <div style="background:white; padding:20px; border-radius:20px; max-width:340px; width:100%; text-align:center" onclick="event.stopPropagation()">
