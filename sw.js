@@ -1,13 +1,18 @@
 // Service worker ReptilKu.
 // Naikkan angka versi ini setiap kali kamu mengubah file di daftar ASET.
-const VERSI = 'reptilku-v2';
-const ASET = ['./', './index.html', '. /pakan.html', '. /toko.html', './manifest.json'];
+const VERSI = 'reptilku-v3';
+const ASET = ['./', './index.html', './pakan.html', './toko.html', './manifest.json'];
 
 // Data hidup (login, database) tidak boleh disimpan di cache.
 const LEWATI = ['firestore.googleapis.com', 'identitytoolkit.googleapis.com', 'securetoken.googleapis.com', 'firebaseinstallations.googleapis.com'];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(VERSI).then(c => c.addAll(ASET)).then(() => self.skipWaiting()));
+  // Satu file gagal diunduh tidak boleh menggagalkan seluruh pemasangan
+  e.waitUntil(
+    caches.open(VERSI)
+      .then(c => Promise.all(ASET.map(a => c.add(a).catch(() => null))))
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', e => {

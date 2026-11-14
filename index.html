@@ -1919,16 +1919,25 @@ window.hwAI = async () => {
     'kandang (suhu, kelembapan, ukuran kandang, substrat, dekorasi), pakan (jenis pakan dan frekuensi), ' +
     'perhatian (risiko, penyakit umum, status dilindungi/legalitas bila ada). ' +
     'Jika tidak yakin spesiesnya, tulis tebakan terbaik di name dan latin, dan awali about dengan "(Perlu dicek: spesies belum pasti.)". ' +
-    'Jangan mengarang fakta; jika tidak tahu, tulis singkat bahwa perlu diverifikasi.';
+    'Jangan mengarang fakta; jika tidak tahu, tulis singkat bahwa perlu diverifikasi. Tulis padat dan ringkas: setiap kolom maksimal 4 kalimat atau poin.';
   try {
-    const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + HW_AI_MODEL + ':generateContent', {
+    const kirim = () => fetch('https://generativelanguage.googleapis.com/v1beta/models/' + HW_AI_MODEL + ':generateContent', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
       body: JSON.stringify({
         contents: [{ parts: [{ inline_data: { mime_type: 'image/jpeg', data: hwFoto.split(',')[1] } }, { text: perintah }] }],
-        generationConfig: { responseMimeType: 'application/json' }
-      })
+        generationConfig: { responseMimeType: 'application/json', thinkingConfig: { thinkingLevel: 'low' } }
+      }),
+      signal: AbortSignal.timeout(60000)
     });
+    let res;
+    try { res = await kirim(); }
+    catch (e1) {   // gagal terhubung: coba sekali lagi
+      btn.textContent = 'Mencoba lagi...';
+      await new Promise(r => setTimeout(r, 1500));
+      try { res = await kirim(); }
+      catch (e2) { throw new Error('Tidak bisa terhubung ke server Google (' + (e2.name || 'error') + '). Cek internet, atau service worker (sw.js) mungkin memblokir.'); }
+    }
     const data = await res.json();
     if (data.error) {
       if (/API key|API_KEY/i.test(data.error.message || '')) localStorage.removeItem('reptilku_gemini');
