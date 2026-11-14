@@ -1899,7 +1899,7 @@ window.hwPilihFoto = async input => {
 
 // ===== ISI OTOMATIS DARI FOTO (AI GEMINI, KHUSUS ADMIN) =====
 // API key Gemini (gratis dari aistudio.google.com) ditempel sekali dan disimpan hanya di HP admin.
-const HW_AI_MODEL = 'gemini-2.5-flash';
+const HW_AI_MODEL = 'gemini-3.8-flash';
 window.hwAIGantiKey = () => {
   const k = (prompt('Tempel API key Gemini (gratis dari aistudio.google.com). Disimpan di HP ini saja.') || '').trim();
   if (k) localStorage.setItem('reptilku_gemini', k);
