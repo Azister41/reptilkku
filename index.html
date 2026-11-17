@@ -445,19 +445,6 @@ html, body { overflow-x: hidden; max-width: 100%; }
     </div>
 
     <button onclick="showPage('akun')" style="margin-top:20px; background:#16372E; color:white; padding:8px 18px; border-radius:20px; border:none; font-weight:600; cursor:pointer">← Kembali ke Akun</button>
-      <!-- APLIKASI KAMI LAINNYA -->
-<div style="border-top:1px solid #eee;margin-top:16px;padding-top:16px">
-  <p style="font-weight:700;color:#16372E;margin-bottom:10px;font-size:14px">Aplikasi Kami Lainnya</p>
-
-  <a href="https://github.com/azister41/morphku/releases/download/latest-apk/morphku.apk" target="_blank" rel="noopener" style="text-decoration:none;display:flex;gap:12px;align-items:center;background:#FFF7ED;border:1px solid #FFE0B2;border-radius:16px;padding:12px">
-    <img src="morphku.png" style="width:48px;height:48px;border-radius:12px;object-fit:cover">
-    <div style="flex:1">
-      <b style="color:#222;font-size:14px">Morphku - Kalkulator Morph</b>
-      <p style="color:#666;font-size:12px;margin:2px 0 0">Hitung hasil anakan Gecko &amp; Ball Python</p>
-    </div>
-    <span style="background:#FF7A00;color:#fff;font-size:11px;font-weight:bold;padding:6px 10px;border-radius:20px">UNDUH</span>
-  </a>
-</div>
   </section>
     <div id="modal-qris" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:99999; justify-content:center; align-items:center; padding:20px" onclick="tutupQris()">
     <div style="background:white; padding:20px; border-radius:20px; max-width:340px; width:100%; text-align:center" onclick="event.stopPropagation()">
@@ -2220,33 +2207,6 @@ function hitungJarak(lat1, lon1, lat2, lon2) {
     setTimeout(cekDanTampilkanAdmin, 2000);
   });
 
-</script>
-<!-- POPUP IKLAN MORPHKU - VERSI LOGO -->
-<div id="popupIklan" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center;padding:20px">
-  <div style="background:#fff;border-radius:20px;padding:22px;text-align:center;max-width:340px;width:100%;position:relative">
-    <button onclick="tutupPopup()" style="position:absolute;top:10px;right:14px;border:none;background:none;font-size:20px;cursor:pointer">✕</button>
-    
-    <!-- LOGO MORPHKU - GANTI EMOJI DNA -->
-    <img src="logo-morphku.png" style="width:80px;height:80px;border-radius:20px;object-fit:cover;margin:0 auto;display:block">
-
-    <h3 style="font-size:18px;margin:12px 0 4px">Sudah Coba Morphku?</h3>
-    <p style="font-size:13px;color:#666;line-height:1.5">Hitung hasil anakan gecko & ball pythonmu sebelum breeding di <b>Morphku</b>. Akurat!</p>
-    <a href="https://azister41.github.io/morphku/" style="display:block;background:#FF7A00;color:#fff;padding:14px;border-radius:12px;text-decoration:none;font-weight:bold;margin-top:14px">⬇️ Download Gratis</a>
-    <button onclick="tutupPopup()" style="border:none;background:none;color:#999;font-size:13px;margin-top:10px;cursor:pointer">Nanti Saja</button>
-  </div>
-</div>
-
-<script>
-function tutupPopup(){
-  document.getElementById('popupIklan').style.display='none';
-  localStorage.setItem('popupIklanTerakhir', Date.now());
-}
-setTimeout(function(){
-  var terakhir = localStorage.getItem('popupIklanTerakhir') || 0;
-  if(Date.now() - terakhir > 86400000){
-    document.getElementById('popupIklan').style.display='flex';
-  }
-}, 3000);
 </script>
 <script src="notif.js"></script>
 </body>
