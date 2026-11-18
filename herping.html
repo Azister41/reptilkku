@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Herping - Tandain Hewan</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+<style>
+  body{margin:0;font-family:sans-serif}
+  #map{height:420px;width:100%;background:#ddd}
+  .panel{padding:12px}
+  input,textarea,select{width:100%;padding:10px;margin:6px 0;border:1px solid #ccc;border-radius:8px;box-sizing:border-box}
+  button{width:100%;padding:12px;border:none;border-radius:8px;background:#16a34a;color:white;font-weight:bold;font-size:16px}
+  .btn-lokasi{background:#2563eb;margin-bottom:8px}
+  .btn-tandai{background:#f59e0b;margin-bottom:10px}
+  .card{border:1px solid #ddd;padding:10px;border-radius:10px;margin-top:10px;display:flex;justify-content:space-between}
+  .hapus{background:#ef4444;width:auto;padding:6px 10px;font-size:12px}
+  #infoLokasi{font-size:12px;background:#e0f2fe;padding:8px;border-radius:8px;margin-bottom:10px;display:none}
+</style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<div class="panel">
+  <div id="infoLokasi"></div>
+  <button class="btn-lokasi" onclick="keLokasiSaya()">📍 Ke Lokasi Saya</button>
+  <button class="btn-tandai" onclick="tandaiPosisiSaya()">🎯 TANDAI POSISI SAYA SEKARANG</button>
+  <p style="font-size:13px;color:#666">Berdiri di dekat hewan, pencet tombol kuning, isi nama, Simpan. Atau tap manual di peta.</p>
+
+  <input id="nama" placeholder="Nama hewan, cth: Ular Hijau / Kura Duri">
+  <select id="kategori"><option>Ular</option><option>Kadal</option><option>Kura-Kura</option><option>Kodok</option><option>Serangga</option><option>Lainnya</option></select>
+  <textarea id="catatan" placeholder="Catatan: jam berapa, cuaca, di pohon / di sungai, dll"></textarea>
+  <button onclick="simpan()">💾 SIMPAN TITIK INI</button>
+
+  <h3>📋 Temuan Abang (<span id="jumlah">0</span>)</h3>
+  <div id="list"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script>
+  // === PETA - SAMA PERSIS KAYAK YANG TADI UDAH WORK ===
+  var map = L.map('map').setView([-7.005, 110.438], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap', maxZoom:19}).addTo(map);
+  setTimeout(function(){ map.invalidateSize(); }, 800);
+
+  var data = JSON.parse(localStorage.getItem('herping') || '[]');
+  var titikSementara = null;
+  var markerSementara = null;
+  var posisiSaya = null;
+  var markerSaya = null;
+
+  // Tap peta manual
+  map.on('click', function(e){
+    titikSementara = e.latlng;
+    if(markerSementara) map.removeLayer(markerSementara);
+    markerSementara = L.marker(e.latlng).addTo(map).bindPopup("Titik baru di sini!").openPopup();
+  });
+
+  // === LOKASI - VERSI SIMPLE ===
+  function keLokasiSaya(){
+    document.getElementById('infoLokasi').style.display = 'block';
+    document.getElementById('infoLokasi').innerText = "⏳ Lagi nyari GPS... pastiin GPS nyala & pencet ALLOW kalau muncul popup...";
+    map.locate({setView:true, maxZoom:17, enableHighAccuracy:true, timeout:15000});
+  }
+
+  map.on('locationfound', function(e){
+    posisiSaya = e.latlng;
+    if(markerSaya) map.removeLayer(markerSaya);
+    markerSaya = L.circleMarker(e.latlng, {radius:10, color:'white', fillColor:'#2563eb', fillOpacity:1, weight:3}).addTo(map).bindPopup("Abang di sini!").openPopup();
+    document.getElementById('infoLokasi').innerText = "📍 Lokasi: " + e.latlng.lat.toFixed(6) + ", " + e.latlng.lng.toFixed(6) + " | Akurasi ±" + Math.round(e.accuracy) + "m";
+  });
+
+  map.on('locationerror', function(e){
+    document.getElementById('infoLokasi').innerText = "❌ Gagal: " + e.message + " | Coba nyalain GPS, refresh, pencet ALLOW.";
+    alert("Gagal baca lokasi!\n\n1. Nyalain GPS HP\n2. Refresh halaman\n3. Pas muncul popup, pencet ALLOW / IZINKAN\n\nKalau abang buka via http://localhost:8080 dari HP lain, itu gak bisa. Harus buka file-nya langsung di HP yang sama.");
+  });
+
+  function tandaiPosisiSaya(){
+    if(!posisiSaya){
+      alert("Lokasi belum ketemu! Pencet dulu tombol biru 'Ke Lokasi Saya', tunggu titik biru muncul.");
+      keLokasiSaya();
+      return;
+    }
+    titikSementara = posisiSaya;
+    if(markerSementara) map.removeLayer(markerSementara);
+    markerSementara = L.marker(posisiSaya).addTo(map).bindPopup("Titik di posisi abang!").openPopup();
+    map.setView(posisiSaya, 17);
+  }
+
+  function simpan(){
+    if(!titikSementara){ alert("Klik dulu di peta / pencet tombol kuning!"); return; }
+    var nama = document.getElementById('nama').value;
+    if(!nama){ alert("Isi dulu nama hewannya!"); return; }
+    data.push({nama:nama, kategori:document.getElementById('kategori').value, catatan:document.getElementById('catatan').value, lat:titikSementara.lat, lng:titikSementara.lng, tanggal:new Date().toLocaleString('id-ID')});
+    localStorage.setItem('herping', JSON.stringify(data));
+    document.getElementById('nama').value = '';
+    document.getElementById('catatan').value = '';
+    if(markerSementara) map.removeLayer(markerSementara);
+    titikSementara = null;
+    tampilkan();
+    alert("Kesimpen! ✅");
+  }
+
+  // === TAMPILKAN - BALIK KE VERSI LAMA YANG WORK ===
+  function tampilkan(){
+    map.eachLayer(function(l){ if(l instanceof L.Marker) map.removeLayer(l); });
+    document.getElementById('jumlah').innerText = data.length;
+    var html = '';
+    data.forEach(function(d, i){
+      L.marker([d.lat, d.lng]).addTo(map).bindPopup("<b>"+d.nama+"</b><br>"+d.kategori+"<br>"+d.tanggal+"<br>"+d.catatan);
+      html += '<div class="card"><div><b>'+d.nama+'</b><br><small>'+d.kategori+' - '+d.tanggal+'<br>'+d.catatan+'</small></div><button class="hapus" onclick="hapus('+i+')">Hapus</button></div>';
+    });
+    document.getElementById('list').innerHTML = html || '<p style="color:#999">Belum ada temuan. Gas herping bang!</p>';
+  }
+
+  function hapus(i){ if(confirm("Hapus titik ini?")){ data.splice(i,1); localStorage.setItem('herping', JSON.stringify(data)); tampilkan(); } }
+
+  tampilkan();
+</script>
+</body>
+</html>
