@@ -56,24 +56,48 @@
     markerSementara = L.marker(e.latlng).addTo(map).bindPopup("Titik baru di sini!").openPopup();
   });
 
-  // === LOKASI - VERSI SIMPLE ===
-  function keLokasiSaya(){
-    document.getElementById('infoLokasi').style.display = 'block';
-    document.getElementById('infoLokasi').innerText = "⏳ Lagi nyari GPS... pastiin GPS nyala & pencet ALLOW kalau muncul popup...";
-    map.locate({setView:true, maxZoom:17, enableHighAccuracy:true, timeout:15000});
-  }
+  <script>
+// FUNGSI LOKASI BARU - BISA BUAT WEB + APK
+async function keLokasiSaya(){
+  document.getElementById('infoLokasi').style.display = 'block';
+  document.getElementById('infoLokasi').innerText = "⏳ Lagi nyari GPS...";
 
-  map.on('locationfound', function(e){
-    posisiSaya = e.latlng;
+  try {
+    let lat, lng, akurasi;
+
+    // CEK: LAGI DI APK ATAU DI WEB?
+    if(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Geolocation){
+      // === JALUR APK ===
+      const Geo = window.Capacitor.Plugins.Geolocation;
+      // Minta izin dulu ke Android
+      await Geo.requestPermissions();
+      const pos = await Geo.getCurrentPosition({ enableHighAccuracy: true, timeout: 15000 });
+      lat = pos.coords.latitude;
+      lng = pos.coords.longitude;
+      akurasi = pos.coords.accuracy;
+    } else {
+      // === JALUR WEB (CHROME) ===
+      const pos = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+      });
+      lat = pos.coords.latitude;
+      lng = pos.coords.longitude;
+      akurasi = pos.coords.accuracy;
+    }
+
+    // Kalau berhasil, tampilkan titik biru
+    posisiSaya = { lat: lat, lng: lng };
     if(markerSaya) map.removeLayer(markerSaya);
-    markerSaya = L.circleMarker(e.latlng, {radius:10, color:'white', fillColor:'#2563eb', fillOpacity:1, weight:3}).addTo(map).bindPopup("Abang di sini!").openPopup();
-    document.getElementById('infoLokasi').innerText = "📍 Lokasi: " + e.latlng.lat.toFixed(6) + ", " + e.latlng.lng.toFixed(6) + " | Akurasi ±" + Math.round(e.accuracy) + "m";
-  });
+    markerSaya = L.circleMarker([lat, lng], {radius:10, color:'white', fillColor:'#2563eb', fillOpacity:1, weight:3}).addTo(map).bindPopup("Abang di sini!").openPopup();
+    map.setView([lat, lng], 17);
+    document.getElementById('infoLokasi').innerText = "📍 Lokasi: " + lat.toFixed(6) + ", " + lng.toFixed(6) + " | Akurasi ±" + Math.round(akurasi) + "m";
 
-  map.on('locationerror', function(e){
-    document.getElementById('infoLokasi').innerText = "❌ Gagal: " + e.message + " | Coba nyalain GPS, refresh, pencet ALLOW.";
-    alert("Gagal baca lokasi!\n\n1. Nyalain GPS HP\n2. Refresh halaman\n3. Pas muncul popup, pencet ALLOW / IZINKAN\n\nKalau abang buka via http://localhost:8080 dari HP lain, itu gak bisa. Harus buka file-nya langsung di HP yang sama.");
-  });
+  } catch(err){
+    alert("Gagal baca lokasi di APK!\n\nPenyebabnya: Izin lokasi di APK belum di-allow.\n\nCara benerin di HP:\nSetelan > Aplikasi > ReptilKu > Izin > Lokasi > Izinkan hanya saat aplikasi digunakan\n\nTerus buka lagi aplikasinya, pencet tombol biru lagi.");
+    document.getElementById('infoLokasi').innerText = "❌ Gagal: " + (err.message || err);
+  }
+}
+</script>
 
   function tandaiPosisiSaya(){
     if(!posisiSaya){
