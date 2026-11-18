@@ -23,16 +23,16 @@
 
 <div class="panel">
   <div id="infoLokasi"></div>
-  <button class="btn-lokasi" onclick="keLokasiSaya()">📍 Ke Lokasi Saya</button>
-  <button class="btn-tandai" onclick="tandaiPosisiSaya()">🎯 TANDAI POSISI SAYA SEKARANG</button>
+  <button class="btn-lokasi" onclick="keLokasiSaya()">Ke Lokasi Saya</button>
+  <button class="btn-tandai" onclick="tandaiPosisiSaya()">TANDAI POSISI SAYA SEKARANG</button>
   <p style="font-size:13px;color:#666">Berdiri di dekat hewan, pencet tombol kuning, isi nama, Simpan. Atau tap manual di peta.</p>
 
   <input id="nama" placeholder="Nama hewan, cth: Ular Hijau / Kura Duri">
   <select id="kategori"><option>Ular</option><option>Kadal</option><option>Kura-Kura</option><option>Kodok</option><option>Serangga</option><option>Lainnya</option></select>
   <textarea id="catatan" placeholder="Catatan: jam berapa, cuaca, di pohon / di sungai, dll"></textarea>
-  <button onclick="simpan()">💾 SIMPAN TITIK INI</button>
+  <button onclick="simpan()">SIMPAN TITIK INI</button>
 
-  <h3>📋 Temuan Abang (<span id="jumlah">0</span>)</h3>
+  <h3>Temuan Abang (<span id="jumlah">0</span>)</h3>
   <div id="list"></div>
 </div>
 
@@ -60,7 +60,7 @@
 // FUNGSI LOKASI BARU - BISA BUAT WEB + APK
 async function keLokasiSaya(){
   document.getElementById('infoLokasi').style.display = 'block';
-  document.getElementById('infoLokasi').innerText = "⏳ Lagi nyari GPS...";
+  document.getElementById('infoLokasi').innerText = "Lagi nyari GPS...";
 
   try {
     let lat, lng, akurasi;
