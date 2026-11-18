@@ -64,7 +64,9 @@
   .sheet{position:fixed;left:0;right:0;bottom:0;z-index:600;height:72vh;height:72dvh;
     background:var(--card);border-radius:26px 26px 0 0;box-shadow:0 -8px 30px rgba(20,40,30,.2);
     transform:translateY(calc(100% - var(--peek) - env(safe-area-inset-bottom,0px)));
-    transition:transform .32s cubic-bezier(.2,.8,.2,1);
+    transition:transform .25s ease-out;
+touch-action:none;
+will-change:transform;
     display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom,0px)}
   .sheet.open{transform:translateY(0)}
   .fab{position:absolute;right:16px;top:-62px;width:48px;height:48px;border-radius:50%;
@@ -131,6 +133,35 @@
   .lb{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;padding:16px}
   .lb.on{display:flex}
   .lb img{max-width:100%;max-height:100%;border-radius:12px}
+  
+ .logo-img{
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+.fab{
+  width: 56px !important;
+  height: 56px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  overflow: hidden;
+}
+
+.fab-img{
+  width: 48px !important;
+  height: 48px !important;
+  object-fit: contain !important;
+  display: block !important;
+  margin: 0 !important;
+  transform: none !important;
+}
+
 </style>
 </head>
 <body>
@@ -138,8 +169,8 @@
 <div id="map"></div>
 
 <div class="topbar">
-  <div class="logo">🐍</div>
-  <span>Herping</span>
+  <img src="https://i.postimg.cc/287VtjdY/1795001830-picsay.png" class="logo-img">
+  <span>Herping</span>  
   <span class="count" id="jumlahTop">0</span>
 </div>
 
@@ -147,7 +178,9 @@
 <div class="lb" id="lb"><img id="lbImg" alt="Foto temuan"></div>
 
 <div class="sheet" id="sheet">
-  <button class="fab" id="btnLokasi" aria-label="Ke lokasi saya">🎯</button>
+  <button class="fab" id="btnLokasi" aria-label="Ke lokasi saya">
+  <img src="https://i.postimg.cc/T2F3HLW6/1795001830-picsay.png" class="fab-img" alt="Lokasi saya">
+</button>
   <div class="grip" id="grip"><i></i></div>
 
   <div class="tabs">
@@ -157,7 +190,7 @@
 
   <div class="body" id="body">
     <section id="pTandai">
-      <button class="btn btn-pri" id="btnTandai">📍 Tandai posisi saya sekarang</button>
+      <button class="btn btn-pri" id="btnTandai">Tandai posisi saya sekarang</button>
       <div class="info" id="infoLokasi"></div>
 
       <div class="titik" id="titikRow">
@@ -181,9 +214,9 @@
         <button type="button" id="btnHapusFoto" aria-label="Hapus foto">×</button>
       </div>
       <input type="file" id="inputFoto" accept="image/*" hidden>
-      <p class="hint">Foto disimpan di HP ini saja.</p>
+      <p class="hint">Foto tersimpan di Hp.</p>
 
-      <button class="btn btn-pri" id="btnSimpan">Simpan temuan</button>
+      <button class="btn btn-pri" id="btnSimpan">Simpan</button>
     </section>
 
     <section id="pTemuan" hidden>
@@ -201,12 +234,12 @@
   var PEEK = 150; // tinggi panel saat tertutup (px), samakan dengan --peek di CSS
 
   var KATEGORI = {
-    'Ular':      { e: '🐍', c: '#2f8f5b' },
-    'Kadal':     { e: '🦎', c: '#0f9aa8' },
-    'Kura-Kura': { e: '🐢', c: '#b7791f' },
-    'Kodok':     { e: '🐸', c: '#6aa84f' },
-    'Serangga':  { e: '🐞', c: '#d4543f' },
-    'Lainnya':   { e: '🔎', c: '#6b6fb3' }
+    'Ular':      { e: '', c: '#2f8f5b' },
+    'Kadal':     { e: '', c: '#0f9aa8' },
+    'Kura-Kura': { e: '', c: '#b7791f' },
+    'Kodok':     { e: '', c: '#6aa84f' },
+    'Serangga':  { e: '', c: '#d4543f' },
+    'Lainnya':   { e: '', c: '#6b6fb3' }
   };
   function kat(n){ return KATEGORI[n] || KATEGORI['Lainnya']; }
 
@@ -331,7 +364,7 @@
         (titikSementara.akurasi ? ' (±' + titikSementara.akurasi + ' m)' : '')
       : 'Belum ada titik. Tap peta atau tandai posisi.';
     $('titikRow').classList.toggle('ok', !!titikSementara);
-    elBtnTandai.innerHTML = titikSementara ? '✍️ Isi detail temuan' : '📍 Tandai posisi saya sekarang';
+    elBtnTandai.innerHTML = titikSementara ? ' Isi detail temuan' : ' Tandai posisi saya sekarang';
     elBtnTandai.className = 'btn ' + (titikSementara ? 'btn-soft' : 'btn-pri');
   }
 
@@ -574,11 +607,11 @@
         '</div>' +
         '<div class="act">' +
           '<button class="ic" data-aksi="lihat" aria-label="Lihat di peta">🗺️</button>' +
-          '<button class="ic del" data-aksi="hapus" aria-label="Hapus">🗑️</button>' +
+          '<button class="ic del" data-aksi="hapus" aria-label="Hapus">❌</button>' +
         '</div></div>';
     }
     $('list').innerHTML = html ||
-      '<div class="kosong"><div>🐍</div><p>Belum ada temuan.<br>Gas herping, bang!</p></div>';
+      '<div class="kosong"><div>➕</div><p>Belum ada temuan.<br>Gas herping, bang!</p></div>';
   }
 
   function lihat(i){
