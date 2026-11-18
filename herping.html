@@ -1,20 +1,26 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
+<meta charset="utf-8">
 <title>Herping - Tandain Hewan</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
 <style>
-  body{margin:0;font-family:sans-serif}
-  #map{height:420px;width:100%;background:#ddd}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:sans-serif;color:#1f2937}
+  #map{height:45vh;min-height:300px;width:100%;background:#ddd}
   .panel{padding:12px}
-  input,textarea,select{width:100%;padding:10px;margin:6px 0;border:1px solid #ccc;border-radius:8px;box-sizing:border-box}
-  button{width:100%;padding:12px;border:none;border-radius:8px;background:#16a34a;color:white;font-weight:bold;font-size:16px}
+  input,textarea,select{width:100%;padding:10px;margin:6px 0;border:1px solid #ccc;border-radius:8px;font-size:15px;font-family:inherit}
+  button{width:100%;padding:12px;border:none;border-radius:8px;background:#16a34a;color:#fff;font-weight:bold;font-size:16px}
+  button:disabled{opacity:.6}
   .btn-lokasi{background:#2563eb;margin-bottom:8px}
   .btn-tandai{background:#f59e0b;margin-bottom:10px}
-  .card{border:1px solid #ddd;padding:10px;border-radius:10px;margin-top:10px;display:flex;justify-content:space-between}
-  .hapus{background:#ef4444;width:auto;padding:6px 10px;font-size:12px}
+  .hint{font-size:13px;color:#666}
+  .card{border:1px solid #ddd;padding:10px;border-radius:10px;margin-top:10px;display:flex;justify-content:space-between;gap:10px}
+  .card small{color:#555}
+  .hapus{background:#ef4444;width:auto;padding:6px 10px;font-size:12px;align-self:flex-start}
   #infoLokasi{font-size:12px;background:#e0f2fe;padding:8px;border-radius:8px;margin-bottom:10px;display:none}
+  #infoLokasi.error{background:#fee2e2}
 </style>
 </head>
 <body>
@@ -23,13 +29,16 @@
 
 <div class="panel">
   <div id="infoLokasi"></div>
-  <button class="btn-lokasi" onclick="keLokasiSaya()">Ke Lokasi Saya</button>
+  <button id="btnLokasi" class="btn-lokasi" onclick="keLokasiSaya()">Ke Lokasi Saya</button>
   <button class="btn-tandai" onclick="tandaiPosisiSaya()">TANDAI POSISI SAYA SEKARANG</button>
-  <p style="font-size:13px;color:#666">Berdiri di dekat hewan, pencet tombol kuning, isi nama, Simpan. Atau tap manual di peta.</p>
+  <p class="hint">Berdiri di dekat hewan, pencet tombol kuning, isi nama, Simpan. Atau tap manual di peta.</p>
 
   <input id="nama" placeholder="Nama hewan, cth: Ular Hijau / Kura Duri">
-  <select id="kategori"><option>Ular</option><option>Kadal</option><option>Kura-Kura</option><option>Kodok</option><option>Serangga</option><option>Lainnya</option></select>
-  <textarea id="catatan" placeholder="Catatan: jam berapa, cuaca, di pohon / di sungai, dll"></textarea>
+  <select id="kategori">
+    <option>Ular</option><option>Kadal</option><option>Kura-Kura</option>
+    <option>Kodok</option><option>Serangga</option><option>Lainnya</option>
+  </select>
+  <textarea id="catatan" rows="3" placeholder="Catatan: jam berapa, cuaca, di pohon / di sungai, dll"></textarea>
   <button onclick="simpan()">SIMPAN TITIK INI</button>
 
   <h3>Temuan Abang (<span id="jumlah">0</span>)</h3>
@@ -38,106 +47,243 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script>
-  // === PETA - SAMA PERSIS KAYAK YANG TADI UDAH WORK ===
-  var map = L.map('map').setView([-7.005, 110.438], 13);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap', maxZoom:19}).addTo(map);
-  setTimeout(function(){ map.invalidateSize(); }, 800);
+(function(){
+  'use strict';
 
-  var data = JSON.parse(localStorage.getItem('herping') || '[]');
+  // ================= PETA =================
+  var map = L.map('map').setView([-7.005, 110.438], 13);
+
+  var tileUtama = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap', maxZoom: 19
+  }).addTo(map);
+
+  // Kalau tile OSM diblokir di WebView APK, pindah ke peta cadangan
+  var sudahPindah = false;
+  tileUtama.on('tileerror', function(){
+    if(sudahPindah) return;
+    sudahPindah = true;
+    map.removeLayer(tileUtama);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap © CARTO', subdomains: 'abcd', maxZoom: 19
+    }).addTo(map);
+  });
+
+  // Ukuran peta sering salah di WebView saat awal, jadi dihitung ulang beberapa kali
+  function ukurUlang(){ map.invalidateSize(); }
+  window.addEventListener('load', ukurUlang);
+  window.addEventListener('resize', ukurUlang);
+  window.addEventListener('orientationchange', function(){ setTimeout(ukurUlang, 300); });
+  [300, 800, 1500].forEach(function(t){ setTimeout(ukurUlang, t); });
+
+  // ================= DATA =================
+  var data = [];
+  try { data = JSON.parse(localStorage.getItem('herping') || '[]'); } catch(e){ data = []; }
+
+  function simpanData(){
+    try { localStorage.setItem('herping', JSON.stringify(data)); }
+    catch(e){ alert('Gagal menyimpan data di perangkat ini.'); }
+  }
+
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
   var titikSementara = null;
   var markerSementara = null;
   var posisiSaya = null;
   var markerSaya = null;
+  var layerTemuan = L.layerGroup().addTo(map);
+
+  var elInfo = document.getElementById('infoLokasi');
+  var elBtnLokasi = document.getElementById('btnLokasi');
+
+  function infoLokasi(teks, error){
+    elInfo.style.display = 'block';
+    elInfo.className = error ? 'error' : '';
+    elInfo.innerText = teks;
+  }
 
   // Tap peta manual
   map.on('click', function(e){
     titikSementara = e.latlng;
     if(markerSementara) map.removeLayer(markerSementara);
-    markerSementara = L.marker(e.latlng).addTo(map).bindPopup("Titik baru di sini!").openPopup();
+    markerSementara = L.marker(e.latlng).addTo(map).bindPopup('Titik baru di sini!').openPopup();
   });
 
-  <script>
-// FUNGSI LOKASI BARU - BISA BUAT WEB + APK
-async function keLokasiSaya(){
-  document.getElementById('infoLokasi').style.display = 'block';
-  document.getElementById('infoLokasi').innerText = "Lagi nyari GPS...";
-
-  try {
-    let lat, lng, akurasi;
-
-    // CEK: LAGI DI APK ATAU DI WEB?
-    if(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Geolocation){
-      // === JALUR APK ===
-      const Geo = window.Capacitor.Plugins.Geolocation;
-      // Minta izin dulu ke Android
-      await Geo.requestPermissions();
-      const pos = await Geo.getCurrentPosition({ enableHighAccuracy: true, timeout: 15000 });
-      lat = pos.coords.latitude;
-      lng = pos.coords.longitude;
-      akurasi = pos.coords.accuracy;
-    } else {
-      // === JALUR WEB (CHROME) ===
-      const pos = await new Promise((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
-      });
-      lat = pos.coords.latitude;
-      lng = pos.coords.longitude;
-      akurasi = pos.coords.accuracy;
-    }
-
-    // Kalau berhasil, tampilkan titik biru
-    posisiSaya = { lat: lat, lng: lng };
-    if(markerSaya) map.removeLayer(markerSaya);
-    markerSaya = L.circleMarker([lat, lng], {radius:10, color:'white', fillColor:'#2563eb', fillOpacity:1, weight:3}).addTo(map).bindPopup("Abang di sini!").openPopup();
-    map.setView([lat, lng], 17);
-    document.getElementById('infoLokasi').innerText = "📍 Lokasi: " + lat.toFixed(6) + ", " + lng.toFixed(6) + " | Akurasi ±" + Math.round(akurasi) + "m";
-
-  } catch(err){
-    alert("Gagal baca lokasi di APK!\n\nPenyebabnya: Izin lokasi di APK belum di-allow.\n\nCara benerin di HP:\nSetelan > Aplikasi > ReptilKu > Izin > Lokasi > Izinkan hanya saat aplikasi digunakan\n\nTerus buka lagi aplikasinya, pencet tombol biru lagi.");
-    document.getElementById('infoLokasi').innerText = "❌ Gagal: " + (err.message || err);
+  // ================= GPS (WEB + APK) =================
+  function pluginCap(nama){
+    var C = window.Capacitor;
+    if(!C || !C.Plugins || !C.Plugins[nama]) return null;
+    // Di web biasa Capacitor juga ada, jadi cek apakah benar-benar app native
+    if(typeof C.isNativePlatform === 'function' && !C.isNativePlatform()) return null;
+    return C.Plugins[nama];
   }
-}
-  function tandaiPosisiSaya(){
+
+  function ambilPosisiWeb(){
+    return new Promise(function(resolve, reject){
+      if(!navigator.geolocation){ reject(new Error('Perangkat ini tidak mendukung GPS.')); return; }
+      navigator.geolocation.getCurrentPosition(resolve, reject,
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+    });
+  }
+
+  async function ambilPosisi(){
+    var Geo = pluginCap('Geolocation');
+    if(Geo){
+      // Jalur APK (Capacitor)
+      try {
+        var izin = await Geo.checkPermissions();
+        if(izin.location !== 'granted'){
+          izin = await Geo.requestPermissions();
+        }
+        if(izin.location !== 'granted' && izin.coarseLocation !== 'granted'){
+          throw new Error('IZIN_DITOLAK');
+        }
+        return await Geo.getCurrentPosition({ enableHighAccuracy: true, timeout: 15000 });
+      } catch(e){
+        if(e && e.message === 'IZIN_DITOLAK') throw e;
+        // Plugin gagal, coba cara web sebagai cadangan
+        return await ambilPosisiWeb();
+      }
+    }
+    // Jalur WEB (Chrome), butuh HTTPS atau localhost
+    return await ambilPosisiWeb();
+  }
+
+  function pesanError(err){
+    var kode = err && err.code;
+    var msg = err && err.message;
+    if(msg === 'IZIN_DITOLAK' || kode === 1){
+      return 'Izin lokasi belum diberikan. Buka Setelan > Aplikasi > (nama aplikasi) > Izin > Lokasi > Izinkan, lalu coba lagi.';
+    }
+    if(kode === 2) return 'Posisi tidak ketemu. Nyalakan GPS / Lokasi di HP, lalu coba di tempat terbuka.';
+    if(kode === 3) return 'GPS terlalu lama merespons. Coba lagi di tempat terbuka.';
+    if(window.isSecureContext === false) return 'Browser memblokir lokasi karena halaman tidak HTTPS.';
+    return msg || 'Gagal membaca lokasi.';
+  }
+
+  async function keLokasiSaya(){
+    elBtnLokasi.disabled = true;
+    infoLokasi('Lagi nyari GPS...');
+    try {
+      var pos = await ambilPosisi();
+      var lat = pos.coords.latitude;
+      var lng = pos.coords.longitude;
+      var akurasi = pos.coords.accuracy || 0;
+
+      posisiSaya = { lat: lat, lng: lng };
+      if(markerSaya) map.removeLayer(markerSaya);
+      markerSaya = L.circleMarker([lat, lng], {
+        radius: 10, color: 'white', fillColor: '#2563eb', fillOpacity: 1, weight: 3
+      }).addTo(map).bindPopup('Abang di sini!');
+      map.setView([lat, lng], 17);
+      markerSaya.openPopup();
+
+      infoLokasi('📍 Lokasi: ' + lat.toFixed(6) + ', ' + lng.toFixed(6) + ' | Akurasi ±' + Math.round(akurasi) + 'm');
+      return true;
+    } catch(err){
+      infoLokasi('❌ ' + pesanError(err), true);
+      return false;
+    } finally {
+      elBtnLokasi.disabled = false;
+    }
+  }
+
+  async function tandaiPosisiSaya(){
     if(!posisiSaya){
-      alert("Lokasi belum ketemu! Pencet dulu tombol biru 'Ke Lokasi Saya', tunggu titik biru muncul.");
-      keLokasiSaya();
-      return;
+      var ok = await keLokasiSaya();
+      if(!ok) return;
     }
     titikSementara = posisiSaya;
     if(markerSementara) map.removeLayer(markerSementara);
-    markerSementara = L.marker(posisiSaya).addTo(map).bindPopup("Titik di posisi abang!").openPopup();
-    map.setView(posisiSaya, 17);
+    markerSementara = L.marker([posisiSaya.lat, posisiSaya.lng]).addTo(map)
+      .bindPopup('Titik di posisi abang!').openPopup();
+    map.setView([posisiSaya.lat, posisiSaya.lng], 17);
   }
 
+  // ================= SIMPAN / TAMPIL / HAPUS =================
   function simpan(){
-    if(!titikSementara){ alert("Klik dulu di peta / pencet tombol kuning!"); return; }
-    var nama = document.getElementById('nama').value;
-    if(!nama){ alert("Isi dulu nama hewannya!"); return; }
-    data.push({nama:nama, kategori:document.getElementById('kategori').value, catatan:document.getElementById('catatan').value, lat:titikSementara.lat, lng:titikSementara.lng, tanggal:new Date().toLocaleString('id-ID')});
-    localStorage.setItem('herping', JSON.stringify(data));
+    if(!titikSementara){ alert('Klik dulu di peta / pencet tombol kuning!'); return; }
+    var nama = document.getElementById('nama').value.trim();
+    if(!nama){ alert('Isi dulu nama hewannya!'); return; }
+
+    data.push({
+      nama: nama,
+      kategori: document.getElementById('kategori').value,
+      catatan: document.getElementById('catatan').value,
+      lat: titikSementara.lat,
+      lng: titikSementara.lng,
+      tanggal: new Date().toLocaleString('id-ID')
+    });
+    simpanData();
+
     document.getElementById('nama').value = '';
     document.getElementById('catatan').value = '';
-    if(markerSementara) map.removeLayer(markerSementara);
+    if(markerSementara){ map.removeLayer(markerSementara); markerSementara = null; }
     titikSementara = null;
     tampilkan();
-    alert("Kesimpen! ✅");
+    alert('Kesimpen! ✅');
   }
 
-  // === TAMPILKAN - BALIK KE VERSI LAMA YANG WORK ===
   function tampilkan(){
-    map.eachLayer(function(l){ if(l instanceof L.Marker) map.removeLayer(l); });
+    layerTemuan.clearLayers();
     document.getElementById('jumlah').innerText = data.length;
     var html = '';
     data.forEach(function(d, i){
-      L.marker([d.lat, d.lng]).addTo(map).bindPopup("<b>"+d.nama+"</b><br>"+d.kategori+"<br>"+d.tanggal+"<br>"+d.catatan);
-      html += '<div class="card"><div><b>'+d.nama+'</b><br><small>'+d.kategori+' - '+d.tanggal+'<br>'+d.catatan+'</small></div><button class="hapus" onclick="hapus('+i+')">Hapus</button></div>';
+      L.marker([d.lat, d.lng]).addTo(layerTemuan).bindPopup(
+        '<b>' + esc(d.nama) + '</b><br>' + esc(d.kategori) + '<br>' + esc(d.tanggal) + '<br>' + esc(d.catatan)
+      );
+      html += '<div class="card"><div><b>' + esc(d.nama) + '</b><br><small>' + esc(d.kategori) + ' - ' +
+              esc(d.tanggal) + '<br>' + esc(d.catatan) + '</small></div>' +
+              '<button class="hapus" onclick="hapus(' + i + ')">Hapus</button></div>';
     });
     document.getElementById('list').innerHTML = html || '<p style="color:#999">Belum ada temuan. Gas herping bang!</p>';
   }
 
-  function hapus(i){ if(confirm("Hapus titik ini?")){ data.splice(i,1); localStorage.setItem('herping', JSON.stringify(data)); tampilkan(); } }
+  function hapus(i){
+    if(confirm('Hapus titik ini?')){
+      data.splice(i, 1);
+      simpanData();
+      tampilkan();
+    }
+  }
+
+  // ================= TOMBOL KEMBALI (APK) =================
+  // Urutan: tutup popup > batalkan titik baru > naik ke atas halaman >
+  // balik ke halaman sebelumnya (kalau ada) > keluar aplikasi
+  function adaPopupTerbuka(){ return !!document.querySelector('.leaflet-popup'); }
+
+  function tanganiKembali(canGoBack){
+    if(adaPopupTerbuka()){ map.closePopup(); return; }
+    if(markerSementara){
+      map.removeLayer(markerSementara);
+      markerSementara = null;
+      titikSementara = null;
+      return;
+    }
+    if(window.scrollY > 40){ window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+    if(canGoBack || window.history.length > 1){ window.history.back(); return; }
+    var App = pluginCap('App');
+    if(App && App.exitApp){ App.exitApp(); }
+  }
+
+  var AppPlugin = pluginCap('App');
+  if(AppPlugin && AppPlugin.addListener){
+    AppPlugin.addListener('backButton', function(ev){
+      tanganiKembali(ev && ev.canGoBack);
+    });
+  }
+
+  // ================= Biar bisa dipanggil dari onclick di HTML =================
+  window.keLokasiSaya = keLokasiSaya;
+  window.tandaiPosisiSaya = tandaiPosisiSaya;
+  window.simpan = simpan;
+  window.hapus = hapus;
 
   tampilkan();
+})();
 </script>
 </body>
 </html>
