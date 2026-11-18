@@ -39,6 +39,9 @@
     <option>Kodok</option><option>Serangga</option><option>Lainnya</option>
   </select>
   <textarea id="catatan" rows="3" placeholder="Catatan: jam berapa, cuaca, di pohon / di sungai, dll"></textarea>
+  <label class="hint" for="inputFoto">Foto hewan (opsional, disimpan di HP ini)</label>
+  <input id="inputFoto" type="file" accept="image/*" onchange="bacaFoto(this)">
+  <img id="previewFoto" alt="Pratinjau foto" style="display:none;width:100%;border-radius:8px;margin:6px 0">
   <button onclick="simpan()">SIMPAN TITIK INI</button>
 
   <h3>Temuan Abang (<span id="jumlah">0</span>)</h3>
@@ -80,8 +83,8 @@
   try { data = JSON.parse(localStorage.getItem('herping') || '[]'); } catch(e){ data = []; }
 
   function simpanData(){
-    try { localStorage.setItem('herping', JSON.stringify(data)); }
-    catch(e){ alert('Gagal menyimpan data di perangkat ini.'); }
+    try { localStorage.setItem('herping', JSON.stringify(data)); return true; }
+    catch(e){ return false; }
   }
 
   function esc(s){
@@ -192,10 +195,9 @@
   }
 
   async function tandaiPosisiSaya(){
-    if(!posisiSaya){
-      var ok = await keLokasiSaya();
-      if(!ok) return;
-    }
+    // Selalu ambil posisi terbaru, jangan pakai posisi lama
+    var ok = await keLokasiSaya();
+    if(!ok) return;
     titikSementara = posisiSaya;
     if(markerSementara) map.removeLayer(markerSementara);
     markerSementara = L.marker([posisiSaya.lat, posisiSaya.lng]).addTo(map)
@@ -203,35 +205,45 @@
     map.setView([posisiSaya.lat, posisiSaya.lng], 17);
   }
 
-let fotoData = "";
-function bacaFoto(input){
-  const file = input.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = function(e){
-    const img = new Image();
-    img.onload = function(){
-      // Perkecil foto biar gak bikin HP lemot, max 800px
-      const canvas = document.createElement('canvas');
-      const scale = Math.min(1, 800 / img.width);
-      canvas.width = img.width * scale;
-      canvas.height = img.height * scale;
-      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-      fotoData = canvas.toDataURL('image/jpeg', 0.7);
-      const prev = document.getElementById('previewFoto');
-      prev.src = fotoData;
-      prev.style.display = 'block';
+  // ================= FOTO =================
+  var fotoData = "";
+  var fotoMemproses = false;
+
+  function bacaFoto(input){
+    var file = input.files && input.files[0];
+    if(!file){ return; }
+    fotoMemproses = true;
+    fotoData = "";
+    var prev = document.getElementById('previewFoto');
+    prev.style.display = 'none';
+    var reader = new FileReader();
+    reader.onerror = function(){ fotoMemproses = false; alert('Foto gagal dibaca, coba lagi.'); };
+    reader.onload = function(e){
+      var img = new Image();
+      img.onerror = function(){ fotoMemproses = false; alert('File itu tidak bisa dibuka sebagai gambar.'); };
+      img.onload = function(){
+        // Perkecil biar hemat memori HP, sisi terpanjang maksimal 800px
+        var skala = Math.min(1, 800 / Math.max(img.width, img.height));
+        var canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * skala);
+        canvas.height = Math.round(img.height * skala);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        fotoData = canvas.toDataURL('image/jpeg', 0.7);
+        prev.src = fotoData;
+        prev.style.display = 'block';
+        fotoMemproses = false;
+      };
+      img.src = e.target.result;
     };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
-}
+    reader.readAsDataURL(file);
+  }
 
   // ================= SIMPAN / TAMPIL / HAPUS =================
   function simpan(){
     if(!titikSementara){ alert('Klik dulu di peta / pencet tombol kuning!'); return; }
     var nama = document.getElementById('nama').value.trim();
     if(!nama){ alert('Isi dulu nama hewannya!'); return; }
+    if(fotoMemproses){ alert('Foto masih diproses, tunggu sebentar lalu tekan simpan lagi.'); return; }
 
     data.push({
       nama: nama,
@@ -242,17 +254,21 @@ function bacaFoto(input){
       tanggal: new Date().toLocaleString('id-ID'),
       foto: fotoData
     });
-    simpanData();
+    if(!simpanData()){
+      data.pop();
+      alert('Gagal menyimpan, memori aplikasi penuh. Hapus beberapa temuan berfoto yang lama, lalu coba lagi.');
+      return;
+    }
 
     document.getElementById('nama').value = '';
     document.getElementById('catatan').value = '';
     fotoData = "";
-document.getElementById('previewFoto').style.display = 'none';
-document.getElementById('inputFoto').value = "";
+    document.getElementById('previewFoto').style.display = 'none';
+    document.getElementById('inputFoto').value = "";
     if(markerSementara){ map.removeLayer(markerSementara); markerSementara = null; }
     titikSementara = null;
     tampilkan();
-    alert('Kesimpen! ✅');
+    alert('Kesimpen! \u2705');
   }
 
   function tampilkan(){
@@ -306,6 +322,7 @@ html += '<div class="card"><div><b>' + esc(d.nama) + '</b><br><small>' + esc(d.k
   window.keLokasiSaya = keLokasiSaya;
   window.tandaiPosisiSaya = tandaiPosisiSaya;
   window.simpan = simpan;
+  window.bacaFoto = bacaFoto;
   window.hapus = hapus;
 
   tampilkan();
