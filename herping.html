@@ -203,6 +203,30 @@
     map.setView([posisiSaya.lat, posisiSaya.lng], 17);
   }
 
+let fotoData = "";
+function bacaFoto(input){
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    const img = new Image();
+    img.onload = function(){
+      // Perkecil foto biar gak bikin HP lemot, max 800px
+      const canvas = document.createElement('canvas');
+      const scale = Math.min(1, 800 / img.width);
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      fotoData = canvas.toDataURL('image/jpeg', 0.7);
+      const prev = document.getElementById('previewFoto');
+      prev.src = fotoData;
+      prev.style.display = 'block';
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
   // ================= SIMPAN / TAMPIL / HAPUS =================
   function simpan(){
     if(!titikSementara){ alert('Klik dulu di peta / pencet tombol kuning!'); return; }
@@ -215,12 +239,16 @@
       catatan: document.getElementById('catatan').value,
       lat: titikSementara.lat,
       lng: titikSementara.lng,
-      tanggal: new Date().toLocaleString('id-ID')
+      tanggal: new Date().toLocaleString('id-ID'),
+      foto: fotoData
     });
     simpanData();
 
     document.getElementById('nama').value = '';
     document.getElementById('catatan').value = '';
+    fotoData = "";
+document.getElementById('previewFoto').style.display = 'none';
+document.getElementById('inputFoto').value = "";
     if(markerSementara){ map.removeLayer(markerSementara); markerSementara = null; }
     titikSementara = null;
     tampilkan();
@@ -233,11 +261,9 @@
     var html = '';
     data.forEach(function(d, i){
       L.marker([d.lat, d.lng]).addTo(layerTemuan).bindPopup(
-        '<b>' + esc(d.nama) + '</b><br>' + esc(d.kategori) + '<br>' + esc(d.tanggal) + '<br>' + esc(d.catatan)
-      );
-      html += '<div class="card"><div><b>' + esc(d.nama) + '</b><br><small>' + esc(d.kategori) + ' - ' +
-              esc(d.tanggal) + '<br>' + esc(d.catatan) + '</small></div>' +
-              '<button class="hapus" onclick="hapus(' + i + ')">Hapus</button></div>';
+  '<b>' + esc(d.nama) + '</b><br>' + esc(d.kategori) + '<br>' + esc(d.tanggal) + '<br>' + esc(d.catatan) + (d.foto ? '<br><img src="' + d.foto + '" style="width:100%; border-radius:8px; margin-top:6px;">' : '')
+);
+html += '<div class="card"><div><b>' + esc(d.nama) + '</b><br><small>' + esc(d.kategori) + ' - ' + esc(d.tanggal) + '<br>' + esc(d.catatan) + '</small>' + (d.foto ? '<br><img src="' + d.foto + '" style="width:100%; border-radius:8px; margin-top:6px;">' : '') + '</div>' + '<button class="hapus" onclick="hapus(' + i + ')">Hapus</button></div>';
     });
     document.getElementById('list').innerHTML = html || '<p style="color:#999">Belum ada temuan. Gas herping bang!</p>';
   }
