@@ -4,48 +4,192 @@
 <meta charset="utf-8">
 <title>Herping - Tandain Hewan</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1f6b43">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
 <style>
-  *{box-sizing:border-box}
-  body{margin:0;font-family:sans-serif;color:#1f2937}
-  #map{height:45vh;min-height:300px;width:100%;background:#ddd}
-  .panel{padding:12px}
-  input,textarea,select{width:100%;padding:10px;margin:6px 0;border:1px solid #ccc;border-radius:8px;font-size:15px;font-family:inherit}
-  button{width:100%;padding:12px;border:none;border-radius:8px;background:#16a34a;color:#fff;font-weight:bold;font-size:16px}
-  button:disabled{opacity:.6}
-  .btn-lokasi{background:#2563eb;margin-bottom:8px}
-  .btn-tandai{background:#f59e0b;margin-bottom:10px}
-  .hint{font-size:13px;color:#666}
-  .card{border:1px solid #ddd;padding:10px;border-radius:10px;margin-top:10px;display:flex;justify-content:space-between;gap:10px}
-  .card small{color:#555}
-  .hapus{background:#ef4444;width:auto;padding:6px 10px;font-size:12px;align-self:flex-start}
-  #infoLokasi{font-size:12px;background:#e0f2fe;padding:8px;border-radius:8px;margin-bottom:10px;display:none}
-  #infoLokasi.error{background:#fee2e2}
+  :root{
+    --bg:#f4f1ea; --card:#fffdf8; --ink:#1c2b22; --muted:#6f7d73;
+    --pri:#1f6b43; --pri2:#e3efe6; --line:#e8e3d6; --danger:#d64545;
+    --shadow:0 10px 30px rgba(20,40,30,.18); --peek:150px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#141b16; --card:#1b251e; --ink:#eaf1ea; --muted:#9aa89f;
+      --pri:#2f9e68; --pri2:#21382a; --line:#2b372e; --danger:#f06a6a;
+      --shadow:0 10px 30px rgba(0,0,0,.45);
+    }
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;margin:0}
+  body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg);overflow:hidden}
+  button{font:inherit;cursor:pointer;border:0;color:inherit}
+  [hidden]{display:none !important}
+
+  #map{position:fixed;inset:0;z-index:0;background:#e5e3dc}
+  .leaflet-container{font-family:inherit}
+  .leaflet-control-attribution{font-size:10px;background:rgba(255,255,255,.7) !important;border-radius:8px 0 0 8px}
+  .leaflet-popup-content-wrapper{border-radius:16px;box-shadow:var(--shadow)}
+  .leaflet-popup-content{margin:12px 14px;font-size:14px;line-height:1.35}
+  .leaflet-popup-content img.zoom{width:100%;border-radius:10px;margin-top:8px;display:block}
+
+  /* ===== Header melayang ===== */
+  .topbar{position:fixed;z-index:500;left:12px;top:calc(env(safe-area-inset-top,0px) + 12px);
+    display:flex;align-items:center;gap:8px;background:var(--card);border-radius:999px;
+    padding:7px 8px 7px 8px;box-shadow:var(--shadow);font-weight:800;font-size:15px}
+  .logo{width:30px;height:30px;border-radius:50%;background:var(--pri);display:grid;place-items:center;font-size:16px}
+  .count{background:var(--pri2);color:var(--pri);border-radius:999px;padding:3px 10px;font-size:12px;font-weight:800;margin-left:2px}
+
+  .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 66px);transform:translate(-50%,-10px);
+    background:rgba(28,43,34,.94);color:#fff;padding:10px 16px;border-radius:999px;font-size:14px;font-weight:600;
+    opacity:0;pointer-events:none;transition:.25s;z-index:900;max-width:90vw;text-align:center}
+  .toast.on{opacity:1;transform:translate(-50%,0)}
+
+  /* ===== Marker ===== */
+  .pin{width:38px;height:38px;border-radius:50%;background:var(--pc,#1f6b43);border:3px solid #fff;
+    box-shadow:0 4px 10px rgba(0,0,0,.3);display:grid;place-items:center;font-size:18px;line-height:1}
+  .pin.temp{animation:denyut 1.4s infinite}
+  @keyframes denyut{
+    0%{box-shadow:0 0 0 0 rgba(242,169,59,.7),0 4px 10px rgba(0,0,0,.3)}
+    70%{box-shadow:0 0 0 18px rgba(242,169,59,0),0 4px 10px rgba(0,0,0,.3)}
+    100%{box-shadow:0 0 0 0 rgba(242,169,59,0),0 4px 10px rgba(0,0,0,.3)}
+  }
+  .me{width:18px;height:18px;border-radius:50%;background:#2563eb;border:3px solid #fff;animation:biru 2s infinite}
+  @keyframes biru{
+    0%{box-shadow:0 0 0 0 rgba(37,99,235,.55)}
+    70%{box-shadow:0 0 0 16px rgba(37,99,235,0)}
+    100%{box-shadow:0 0 0 0 rgba(37,99,235,0)}
+  }
+
+  /* ===== Bottom sheet ===== */
+  .sheet{position:fixed;left:0;right:0;bottom:0;z-index:600;height:72vh;height:72dvh;
+    background:var(--card);border-radius:26px 26px 0 0;box-shadow:0 -8px 30px rgba(20,40,30,.2);
+    transform:translateY(calc(100% - var(--peek) - env(safe-area-inset-bottom,0px)));
+    transition:transform .32s cubic-bezier(.2,.8,.2,1);
+    display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom,0px)}
+  .sheet.open{transform:translateY(0)}
+  .fab{position:absolute;right:16px;top:-62px;width:48px;height:48px;border-radius:50%;
+    background:var(--card);box-shadow:var(--shadow);display:grid;place-items:center;font-size:21px}
+  .fab:disabled{opacity:.6}
+  .grip{padding:10px 0 4px;display:flex;justify-content:center;touch-action:none;cursor:grab}
+  .grip i{width:44px;height:5px;border-radius:5px;background:var(--line)}
+  .tabs{display:flex;gap:6px;margin:4px 16px 10px;background:var(--bg);padding:4px;border-radius:14px}
+  .tab{flex:1;padding:9px 0;border-radius:11px;background:none;color:var(--muted);font-weight:700;font-size:14px}
+  .tab.on{background:var(--card);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.12)}
+  .tab .n{display:inline-block;min-width:20px;padding:1px 6px;border-radius:999px;background:var(--pri2);color:var(--pri);font-size:11px;margin-left:4px}
+  .body{flex:1;overflow-y:auto;padding:0 16px 28px;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+
+  .btn{width:100%;padding:15px;border-radius:16px;font-weight:800;font-size:16px;
+    display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .1s}
+  .btn:active{transform:scale(.98)}
+  .btn:disabled{opacity:.6}
+  .btn-pri{background:var(--pri);color:#fff;box-shadow:0 6px 16px rgba(31,107,67,.28)}
+  .btn-soft{background:var(--pri2);color:var(--pri)}
+
+  .info{display:none;font-size:13px;padding:10px 12px;border-radius:12px;background:var(--pri2);margin-top:10px}
+  .info.error{background:#fde8e8;color:#8f2a2a}
+
+  .titik{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:14px;
+    padding:10px 12px;border-radius:14px;background:var(--bg);font-size:13px;color:var(--muted)}
+  .titik.ok{background:var(--pri2);color:var(--ink)}
+  .mini{padding:7px 10px;border-radius:10px;background:var(--card);color:var(--pri);font-weight:700;
+    font-size:12px;border:1px solid var(--line);white-space:nowrap}
+
+  .lbl{display:block;font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:16px 0 6px}
+  .field{width:100%;padding:13px 14px;border:1.5px solid var(--line);border-radius:14px;background:var(--bg);
+    color:var(--ink);font:inherit;font-size:16px;outline:none}
+  .field:focus{border-color:var(--pri);background:var(--card)}
+  textarea.field{resize:none}
+  .field::placeholder{color:var(--muted);opacity:.8}
+
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{padding:9px 13px;border-radius:999px;background:var(--bg);border:1.5px solid var(--line);font-size:14px;font-weight:700}
+  .chip.on{background:var(--pri);border-color:var(--pri);color:#fff}
+
+  .foto{display:flex;align-items:center;justify-content:center;gap:10px;height:92px;border:2px dashed var(--line);
+    border-radius:16px;color:var(--muted);font-weight:700;background:var(--bg);cursor:pointer}
+  .fotoPrev{position:relative;display:none}
+  .fotoPrev img{width:100%;max-height:220px;object-fit:cover;border-radius:16px;display:block}
+  .fotoPrev button{position:absolute;top:8px;right:8px;width:34px;height:34px;border-radius:50%;
+    background:rgba(0,0,0,.62);color:#fff;font-size:20px;line-height:1}
+  .hint{font-size:12px;color:var(--muted);margin:8px 2px 16px}
+
+  /* ===== Daftar temuan ===== */
+  .card{display:flex;gap:12px;padding:12px;border:1px solid var(--line);border-radius:18px;margin-bottom:10px;background:var(--card)}
+  .thumb{width:68px;height:68px;border-radius:14px;flex:none;background:var(--pri2);display:grid;place-items:center;font-size:30px;overflow:hidden}
+  .thumb img{width:100%;height:100%;object-fit:cover}
+  .meta{flex:1;min-width:0}
+  .meta b{display:block;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tag{display:inline-block;font-size:11px;font-weight:800;padding:3px 8px;border-radius:999px;background:var(--pri2);color:var(--pri);margin-top:3px}
+  .tgl{font-size:12px;color:var(--muted);margin-top:4px}
+  .cat{font-size:13px;margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .act{display:flex;flex-direction:column;gap:6px}
+  .ic{width:36px;height:36px;border-radius:12px;background:var(--bg);font-size:16px}
+  .ic.del{color:var(--danger)}
+  .kosong{text-align:center;padding:36px 12px;color:var(--muted)}
+  .kosong div{font-size:44px;margin-bottom:6px}
+
+  .lb{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;padding:16px}
+  .lb.on{display:flex}
+  .lb img{max-width:100%;max-height:100%;border-radius:12px}
 </style>
 </head>
 <body>
 
 <div id="map"></div>
 
-<div class="panel">
-  <div id="infoLokasi"></div>
-  <button id="btnLokasi" class="btn-lokasi" onclick="keLokasiSaya()">Ke Lokasi Saya</button>
-  <button class="btn-tandai" onclick="tandaiPosisiSaya()">TANDAI POSISI SAYA SEKARANG</button>
-  <p class="hint">Berdiri di dekat hewan, pencet tombol kuning, isi nama, Simpan. Atau tap manual di peta.</p>
+<div class="topbar">
+  <div class="logo">🐍</div>
+  <span>Herping</span>
+  <span class="count" id="jumlahTop">0</span>
+</div>
 
-  <input id="nama" placeholder="Nama hewan, cth: Ular Hijau / Kura Duri">
-  <select id="kategori">
-    <option>Ular</option><option>Kadal</option><option>Kura-Kura</option>
-    <option>Kodok</option><option>Serangga</option><option>Lainnya</option>
-  </select>
-  <textarea id="catatan" rows="3" placeholder="Catatan: jam berapa, cuaca, di pohon / di sungai, dll"></textarea>
-  <label class="hint" for="inputFoto">Foto hewan (opsional, disimpan di HP ini)</label>
-  <input id="inputFoto" type="file" accept="image/*" onchange="bacaFoto(this)">
-  <img id="previewFoto" alt="Pratinjau foto" style="display:none;width:100%;border-radius:8px;margin:6px 0">
-  <button onclick="simpan()">SIMPAN TITIK INI</button>
+<div class="toast" id="toast"></div>
+<div class="lb" id="lb"><img id="lbImg" alt="Foto temuan"></div>
 
-  <h3>Temuan Abang (<span id="jumlah">0</span>)</h3>
-  <div id="list"></div>
+<div class="sheet" id="sheet">
+  <button class="fab" id="btnLokasi" aria-label="Ke lokasi saya">🎯</button>
+  <div class="grip" id="grip"><i></i></div>
+
+  <div class="tabs">
+    <button class="tab on" id="tabTandai">Tandai</button>
+    <button class="tab" id="tabTemuan">Temuan <span class="n" id="nTemuan">0</span></button>
+  </div>
+
+  <div class="body" id="body">
+    <section id="pTandai">
+      <button class="btn btn-pri" id="btnTandai">📍 Tandai posisi saya sekarang</button>
+      <div class="info" id="infoLokasi"></div>
+
+      <div class="titik" id="titikRow">
+        <span id="txtTitik">Belum ada titik. Tap peta atau tandai posisi.</span>
+        <button class="mini" id="btnPakaiPosisi">Posisi saya</button>
+      </div>
+
+      <label class="lbl" for="nama">Nama hewan</label>
+      <input class="field" id="nama" placeholder="cth: Ular Hijau / Kura Duri" autocomplete="off">
+
+      <label class="lbl">Kategori</label>
+      <div class="chips" id="chips"></div>
+
+      <label class="lbl" for="catatan">Catatan</label>
+      <textarea class="field" id="catatan" rows="3" placeholder="Jam berapa, cuaca, di pohon / di sungai, dll"></textarea>
+
+      <label class="lbl">Foto (opsional)</label>
+      <label class="foto" id="pilihFoto" for="inputFoto">📷 Ambil / pilih foto</label>
+      <div class="fotoPrev" id="fotoPrev">
+        <img id="previewFoto" alt="Pratinjau foto">
+        <button type="button" id="btnHapusFoto" aria-label="Hapus foto">×</button>
+      </div>
+      <input type="file" id="inputFoto" accept="image/*" hidden>
+      <p class="hint">Foto disimpan di HP ini saja.</p>
+
+      <button class="btn btn-pri" id="btnSimpan">Simpan temuan</button>
+    </section>
+
+    <section id="pTemuan" hidden>
+      <div id="list"></div>
+    </section>
+  </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
@@ -53,8 +197,22 @@
 (function(){
   'use strict';
 
+  var $ = function(id){ return document.getElementById(id); };
+  var PEEK = 150; // tinggi panel saat tertutup (px), samakan dengan --peek di CSS
+
+  var KATEGORI = {
+    'Ular':      { e: '🐍', c: '#2f8f5b' },
+    'Kadal':     { e: '🦎', c: '#0f9aa8' },
+    'Kura-Kura': { e: '🐢', c: '#b7791f' },
+    'Kodok':     { e: '🐸', c: '#6aa84f' },
+    'Serangga':  { e: '🐞', c: '#d4543f' },
+    'Lainnya':   { e: '🔎', c: '#6b6fb3' }
+  };
+  function kat(n){ return KATEGORI[n] || KATEGORI['Lainnya']; }
+
   // ================= PETA =================
-  var map = L.map('map').setView([-7.005, 110.438], 13);
+  var map = L.map('map', { zoomControl: false }).setView([-7.005, 110.438], 13);
+  map.attributionControl.setPosition('topright');
 
   var tileUtama = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap', maxZoom: 19
@@ -81,6 +239,7 @@
   // ================= DATA =================
   var data = [];
   try { data = JSON.parse(localStorage.getItem('herping') || '[]'); } catch(e){ data = []; }
+  if(!Array.isArray(data)) data = [];
 
   function simpanData(){
     try { localStorage.setItem('herping', JSON.stringify(data)); return true; }
@@ -93,26 +252,108 @@
     });
   }
 
+  // ================= STATE =================
   var titikSementara = null;
   var markerSementara = null;
   var posisiSaya = null;
   var markerSaya = null;
+  var lingkarAkurasi = null;
+  var kategoriDipilih = 'Ular';
+  var fotoData = '';
+  var fotoMemproses = false;
   var layerTemuan = L.layerGroup().addTo(map);
+  var markerList = [];
 
-  var elInfo = document.getElementById('infoLokasi');
-  var elBtnLokasi = document.getElementById('btnLokasi');
+  var elSheet = $('sheet');
+  var elInfo = $('infoLokasi');
+  var elBtnLokasi = $('btnLokasi');
+  var elBtnTandai = $('btnTandai');
+
+  // ================= UI KECIL =================
+  var timerToast = null;
+  function toast(teks, ms){
+    var el = $('toast');
+    el.textContent = teks;
+    el.classList.add('on');
+    clearTimeout(timerToast);
+    timerToast = setTimeout(function(){ el.classList.remove('on'); }, ms || 2400);
+  }
 
   function infoLokasi(teks, error){
     elInfo.style.display = 'block';
-    elInfo.className = error ? 'error' : '';
-    elInfo.innerText = teks;
+    elInfo.className = 'info' + (error ? ' error' : '');
+    elInfo.style.display = 'block';
+    elInfo.textContent = teks;
   }
 
-  // Tap peta manual
-  map.on('click', function(e){
-    titikSementara = e.latlng;
+  function sheetTerbuka(){ return elSheet.classList.contains('open'); }
+
+  // Geser peta supaya titik tampil di bagian peta yang tidak tertutup panel
+  function fokusTitik(ll, zoom, panelTerbuka){
+    var z = zoom || map.getZoom();
+    var h = map.getSize().y;
+    var tinggiPanel = panelTerbuka ? h * 0.72 : PEEK;
+    var yTampil = (h - tinggiPanel) / 2;
+    var geser = h / 2 - yTampil;
+    var p = map.project([ll.lat, ll.lng], z).add([0, geser]);
+    map.setView(map.unproject(p, z), z, { animate: true });
+  }
+
+  function bukaSheet(buka){
+    elSheet.classList.toggle('open', buka);
+    if(buka && titikSementara){
+      setTimeout(function(){ fokusTitik(titikSementara, map.getZoom(), true); }, 120);
+    }
+  }
+
+  function setTab(t){
+    var tandai = (t === 'tandai');
+    $('tabTandai').classList.toggle('on', tandai);
+    $('tabTemuan').classList.toggle('on', !tandai);
+    $('pTandai').hidden = !tandai;
+    $('pTemuan').hidden = tandai;
+    $('body').scrollTop = 0;
+    if(!tandai) bukaSheet(true);
+  }
+
+  // ================= MARKER =================
+  function ikon(e, c, temp){
+    return L.divIcon({
+      className: '',
+      html: '<div class="pin' + (temp ? ' temp' : '') + '" style="--pc:' + c + '">' + e + '</div>',
+      iconSize: [38, 38], iconAnchor: [19, 19], popupAnchor: [0, -22]
+    });
+  }
+
+  function updateTitik(){
+    $('txtTitik').textContent = titikSementara
+      ? 'Titik: ' + titikSementara.lat.toFixed(5) + ', ' + titikSementara.lng.toFixed(5) +
+        (titikSementara.akurasi ? ' (±' + titikSementara.akurasi + ' m)' : '')
+      : 'Belum ada titik. Tap peta atau tandai posisi.';
+    $('titikRow').classList.toggle('ok', !!titikSementara);
+    elBtnTandai.innerHTML = titikSementara ? '✍️ Isi detail temuan' : '📍 Tandai posisi saya sekarang';
+    elBtnTandai.className = 'btn ' + (titikSementara ? 'btn-soft' : 'btn-pri');
+  }
+
+  function setTemp(ll){
+    titikSementara = { lat: ll.lat, lng: ll.lng, akurasi: ll.akurasi || 0 };
     if(markerSementara) map.removeLayer(markerSementara);
-    markerSementara = L.marker(e.latlng).addTo(map).bindPopup('Titik baru di sini!').openPopup();
+    var k = kat(kategoriDipilih);
+    markerSementara = L.marker([ll.lat, ll.lng], { icon: ikon(k.e, '#f2a93b', true) }).addTo(map);
+    updateTitik();
+  }
+
+  function hapusTemp(){
+    if(markerSementara){ map.removeLayer(markerSementara); markerSementara = null; }
+    titikSementara = null;
+    updateTitik();
+  }
+
+  // Tap peta: pilih titik. Kalau panel terbuka, tap peta menutup panel dulu.
+  map.on('click', function(e){
+    if(sheetTerbuka()){ bukaSheet(false); return; }
+    setTemp(e.latlng);
+    toast('Titik dipilih. Tarik panel ke atas untuk isi detail.');
   });
 
   // ================= GPS (WEB + APK) =================
@@ -176,18 +417,23 @@
       var lng = pos.coords.longitude;
       var akurasi = pos.coords.accuracy || 0;
 
-      posisiSaya = { lat: lat, lng: lng };
+      posisiSaya = { lat: lat, lng: lng, akurasi: Math.round(akurasi) };
       if(markerSaya) map.removeLayer(markerSaya);
-      markerSaya = L.circleMarker([lat, lng], {
-        radius: 10, color: 'white', fillColor: '#2563eb', fillOpacity: 1, weight: 3
+      if(lingkarAkurasi) map.removeLayer(lingkarAkurasi);
+      lingkarAkurasi = L.circle([lat, lng], {
+        radius: akurasi, color: '#2563eb', weight: 1, fillColor: '#2563eb', fillOpacity: 0.1, interactive: false
+      }).addTo(map);
+      markerSaya = L.marker([lat, lng], {
+        icon: L.divIcon({ className: '', html: '<div class="me"></div>', iconSize: [18, 18], iconAnchor: [9, 9] })
       }).addTo(map).bindPopup('Abang di sini!');
-      map.setView([lat, lng], 17);
-      markerSaya.openPopup();
+      fokusTitik(posisiSaya, 17, sheetTerbuka());
 
-      infoLokasi('📍 Lokasi: ' + lat.toFixed(6) + ', ' + lng.toFixed(6) + ' | Akurasi ±' + Math.round(akurasi) + 'm');
+      elInfo.style.display = 'none';
       return true;
     } catch(err){
-      infoLokasi('❌ ' + pesanError(err), true);
+      var pesan = pesanError(err);
+      infoLokasi('❌ ' + pesan, true);
+      toast(pesan, 4500);
       return false;
     } finally {
       elBtnLokasi.disabled = false;
@@ -195,32 +441,43 @@
   }
 
   async function tandaiPosisiSaya(){
+    elBtnTandai.disabled = true;
     // Selalu ambil posisi terbaru, jangan pakai posisi lama
     var ok = await keLokasiSaya();
+    elBtnTandai.disabled = false;
     if(!ok) return;
-    titikSementara = posisiSaya;
-    if(markerSementara) map.removeLayer(markerSementara);
-    markerSementara = L.marker([posisiSaya.lat, posisiSaya.lng]).addTo(map)
-      .bindPopup('Titik di posisi abang!').openPopup();
-    map.setView([posisiSaya.lat, posisiSaya.lng], 17);
+    setTemp(posisiSaya);
+    toast('Posisi ditandai ✅');
+    setTab('tandai');
+    bukaSheet(true);
   }
 
   // ================= FOTO =================
-  var fotoData = "";
-  var fotoMemproses = false;
+  function tampilFoto(src){
+    $('previewFoto').src = src;
+    $('fotoPrev').style.display = 'block';
+    $('pilihFoto').style.display = 'none';
+  }
+
+  function resetFoto(){
+    fotoData = '';
+    fotoMemproses = false;
+    $('fotoPrev').style.display = 'none';
+    $('pilihFoto').style.display = 'flex';
+    $('inputFoto').value = '';
+    $('previewFoto').removeAttribute('src');
+  }
 
   function bacaFoto(input){
     var file = input.files && input.files[0];
     if(!file){ return; }
     fotoMemproses = true;
-    fotoData = "";
-    var prev = document.getElementById('previewFoto');
-    prev.style.display = 'none';
+    fotoData = '';
     var reader = new FileReader();
-    reader.onerror = function(){ fotoMemproses = false; alert('Foto gagal dibaca, coba lagi.'); };
+    reader.onerror = function(){ fotoMemproses = false; toast('Foto gagal dibaca, coba lagi.', 3500); };
     reader.onload = function(e){
       var img = new Image();
-      img.onerror = function(){ fotoMemproses = false; alert('File itu tidak bisa dibuka sebagai gambar.'); };
+      img.onerror = function(){ fotoMemproses = false; toast('File itu tidak bisa dibuka sebagai gambar.', 3500); };
       img.onload = function(){
         // Perkecil biar hemat memori HP, sisi terpanjang maksimal 800px
         var skala = Math.min(1, 800 / Math.max(img.width, img.height));
@@ -229,8 +486,7 @@
         canvas.height = Math.round(img.height * skala);
         canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
         fotoData = canvas.toDataURL('image/jpeg', 0.7);
-        prev.src = fotoData;
-        prev.style.display = 'block';
+        tampilFoto(fotoData);
         fotoMemproses = false;
       };
       img.src = e.target.result;
@@ -240,48 +496,98 @@
 
   // ================= SIMPAN / TAMPIL / HAPUS =================
   function simpan(){
-    if(!titikSementara){ alert('Klik dulu di peta / pencet tombol kuning!'); return; }
-    var nama = document.getElementById('nama').value.trim();
-    if(!nama){ alert('Isi dulu nama hewannya!'); return; }
-    if(fotoMemproses){ alert('Foto masih diproses, tunggu sebentar lalu tekan simpan lagi.'); return; }
+    if(!titikSementara){
+      toast('Tap peta atau pencet tombol tandai dulu ya!', 3000);
+      bukaSheet(false);
+      return;
+    }
+    var nama = $('nama').value.trim();
+    if(!nama){ toast('Isi dulu nama hewannya!'); $('nama').focus(); return; }
+    if(fotoMemproses){ toast('Foto masih diproses, tunggu sebentar...'); return; }
 
-    data.push({
+    var item = {
       nama: nama,
-      kategori: document.getElementById('kategori').value,
-      catatan: document.getElementById('catatan').value,
+      kategori: kategoriDipilih,
+      catatan: $('catatan').value,
       lat: titikSementara.lat,
       lng: titikSementara.lng,
       tanggal: new Date().toLocaleString('id-ID'),
       foto: fotoData
-    });
+    };
+    data.push(item);
     if(!simpanData()){
       data.pop();
-      alert('Gagal menyimpan, memori aplikasi penuh. Hapus beberapa temuan berfoto yang lama, lalu coba lagi.');
+      toast('Gagal menyimpan: memori penuh. Hapus beberapa temuan berfoto yang lama.', 5000);
       return;
     }
 
-    document.getElementById('nama').value = '';
-    document.getElementById('catatan').value = '';
-    fotoData = "";
-    document.getElementById('previewFoto').style.display = 'none';
-    document.getElementById('inputFoto').value = "";
-    if(markerSementara){ map.removeLayer(markerSementara); markerSementara = null; }
-    titikSementara = null;
+    $('nama').value = '';
+    $('catatan').value = '';
+    resetFoto();
+    hapusTemp();
     tampilkan();
-    alert('Kesimpen! \u2705');
+    bukaSheet(false);
+    fokusTitik(item, map.getZoom(), false);
+    toast('Kesimpen! ✅');
+  }
+
+  function datanyaValid(d){
+    return d && isFinite(d.lat) && isFinite(d.lng);
+  }
+
+  function fotoAman(d){
+    return (d && typeof d.foto === 'string' && d.foto.indexOf('data:image/') === 0) ? d.foto : '';
+  }
+
+  function popupHtml(d, k, foto){
+    return '<b>' + k.e + ' ' + esc(d.nama) + '</b><br><small>' + esc(d.kategori) + ' · ' + esc(d.tanggal) + '</small>' +
+      (d.catatan ? '<p style="margin:6px 0 0">' + esc(d.catatan) + '</p>' : '') +
+      (foto ? '<img class="zoom" src="' + esc(foto) + '" alt="Foto">' : '');
   }
 
   function tampilkan(){
     layerTemuan.clearLayers();
-    document.getElementById('jumlah').innerText = data.length;
-    var html = '';
+    markerList = [];
+    $('nTemuan').textContent = data.length;
+    $('jumlahTop').textContent = data.length;
+
     data.forEach(function(d, i){
-      L.marker([d.lat, d.lng]).addTo(layerTemuan).bindPopup(
-  '<b>' + esc(d.nama) + '</b><br>' + esc(d.kategori) + '<br>' + esc(d.tanggal) + '<br>' + esc(d.catatan) + (d.foto ? '<br><img src="' + d.foto + '" style="width:100%; border-radius:8px; margin-top:6px;">' : '')
-);
-html += '<div class="card"><div><b>' + esc(d.nama) + '</b><br><small>' + esc(d.kategori) + ' - ' + esc(d.tanggal) + '<br>' + esc(d.catatan) + '</small>' + (d.foto ? '<br><img src="' + d.foto + '" style="width:100%; border-radius:8px; margin-top:6px;">' : '') + '</div>' + '<button class="hapus" onclick="hapus(' + i + ')">Hapus</button></div>';
+      if(!datanyaValid(d)){ markerList[i] = null; return; }
+      var k = kat(d.kategori);
+      markerList[i] = L.marker([d.lat, d.lng], { icon: ikon(k.e, k.c) })
+        .addTo(layerTemuan)
+        .bindPopup(popupHtml(d, k, fotoAman(d)), { maxWidth: 240 });
     });
-    document.getElementById('list').innerHTML = html || '<p style="color:#999">Belum ada temuan. Gas herping bang!</p>';
+
+    var html = '';
+    for(var i = data.length - 1; i >= 0; i--){   // terbaru di atas
+      var d = data[i];
+      if(!datanyaValid(d)) continue;
+      var k = kat(d.kategori);
+      var foto = fotoAman(d);
+      html += '<div class="card" data-i="' + i + '">' +
+        '<div class="thumb">' + (foto ? '<img class="zoom" src="' + esc(foto) + '" alt="">' : k.e) + '</div>' +
+        '<div class="meta"><b>' + esc(d.nama) + '</b>' +
+          '<span class="tag">' + k.e + ' ' + esc(d.kategori) + '</span>' +
+          '<div class="tgl">' + esc(d.tanggal) + '</div>' +
+          (d.catatan ? '<div class="cat">' + esc(d.catatan) + '</div>' : '') +
+        '</div>' +
+        '<div class="act">' +
+          '<button class="ic" data-aksi="lihat" aria-label="Lihat di peta">🗺️</button>' +
+          '<button class="ic del" data-aksi="hapus" aria-label="Hapus">🗑️</button>' +
+        '</div></div>';
+    }
+    $('list').innerHTML = html ||
+      '<div class="kosong"><div>🐍</div><p>Belum ada temuan.<br>Gas herping, bang!</p></div>';
+  }
+
+  function lihat(i){
+    var d = data[i];
+    if(!datanyaValid(d)) return;
+    bukaSheet(false);
+    fokusTitik(d, Math.max(map.getZoom(), 16), false);
+    var m = markerList[i];
+    if(m) setTimeout(function(){ m.openPopup(); }, 400);
   }
 
   function hapus(i){
@@ -289,23 +595,96 @@ html += '<div class="card"><div><b>' + esc(d.nama) + '</b><br><small>' + esc(d.k
       data.splice(i, 1);
       simpanData();
       tampilkan();
+      toast('Temuan dihapus');
     }
   }
 
+  // ================= FOTO PENUH LAYAR =================
+  function bukaFoto(src){ $('lbImg').src = src; $('lb').classList.add('on'); }
+  function tutupFoto(){ $('lb').classList.remove('on'); }
+  $('lb').addEventListener('click', tutupFoto);
+  map.on('popupopen', function(e){
+    var el = e.popup.getElement();
+    var im = el && el.querySelector('img.zoom');
+    if(im) im.onclick = function(){ bukaFoto(im.src); };
+  });
+
+  // ================= EVENT UI =================
+  function renderChips(){
+    var h = '';
+    Object.keys(KATEGORI).forEach(function(n){
+      h += '<button type="button" class="chip' + (n === kategoriDipilih ? ' on' : '') + '" data-k="' + esc(n) + '">' +
+           KATEGORI[n].e + ' ' + esc(n) + '</button>';
+    });
+    $('chips').innerHTML = h;
+  }
+
+  $('chips').addEventListener('click', function(e){
+    var b = e.target.closest('.chip');
+    if(!b) return;
+    kategoriDipilih = b.getAttribute('data-k');
+    renderChips();
+    if(markerSementara){
+      var k = kat(kategoriDipilih);
+      markerSementara.setIcon(ikon(k.e, '#f2a93b', true));
+    }
+  });
+
+  $('list').addEventListener('click', function(e){
+    if(e.target.classList && e.target.classList.contains('zoom')){ bukaFoto(e.target.src); return; }
+    var btn = e.target.closest('button[data-aksi]');
+    var card = e.target.closest('.card');
+    if(!btn || !card) return;
+    var i = parseInt(card.getAttribute('data-i'), 10);
+    if(btn.getAttribute('data-aksi') === 'hapus') hapus(i); else lihat(i);
+  });
+
+  elBtnLokasi.addEventListener('click', async function(){
+    var ok = await keLokasiSaya();
+    if(ok) toast('Lokasi ditemukan, akurasi ±' + posisiSaya.akurasi + ' m');
+  });
+  $('btnPakaiPosisi').addEventListener('click', tandaiPosisiSaya);
+  elBtnTandai.addEventListener('click', function(){
+    if(titikSementara){
+      setTab('tandai');
+      bukaSheet(true);
+      setTimeout(function(){ $('nama').focus(); }, 350);
+    } else {
+      tandaiPosisiSaya();
+    }
+  });
+  $('btnSimpan').addEventListener('click', simpan);
+  $('inputFoto').addEventListener('change', function(){ bacaFoto(this); });
+  $('btnHapusFoto').addEventListener('click', resetFoto);
+  $('tabTandai').addEventListener('click', function(){ setTab('tandai'); });
+  $('tabTemuan').addEventListener('click', function(){ setTab('temuan'); });
+
+  // Panel: tap = buka/tutup, geser atas/bawah = buka/tutup
+  var y0 = null, habisGeser = false;
+  var grip = $('grip');
+  grip.addEventListener('touchstart', function(e){ y0 = e.touches[0].clientY; }, { passive: true });
+  grip.addEventListener('touchend', function(e){
+    if(y0 === null) return;
+    var dy = e.changedTouches[0].clientY - y0;
+    y0 = null;
+    if(dy < -25){ bukaSheet(true); habisGeser = true; }
+    else if(dy > 25){ bukaSheet(false); habisGeser = true; }
+  });
+  grip.addEventListener('click', function(){
+    if(habisGeser){ habisGeser = false; return; }
+    bukaSheet(!sheetTerbuka());
+  });
+
   // ================= TOMBOL KEMBALI (APK) =================
-  // Urutan: tutup popup > batalkan titik baru > naik ke atas halaman >
+  // Urutan: tutup foto > tutup popup > tutup panel > batalkan titik baru >
   // balik ke halaman sebelumnya (kalau ada) > keluar aplikasi
   function adaPopupTerbuka(){ return !!document.querySelector('.leaflet-popup'); }
 
   function tanganiKembali(canGoBack){
+    if($('lb').classList.contains('on')){ tutupFoto(); return; }
     if(adaPopupTerbuka()){ map.closePopup(); return; }
-    if(markerSementara){
-      map.removeLayer(markerSementara);
-      markerSementara = null;
-      titikSementara = null;
-      return;
-    }
-    if(window.scrollY > 40){ window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+    if(sheetTerbuka()){ bukaSheet(false); return; }
+    if(markerSementara){ hapusTemp(); return; }
     if(canGoBack || window.history.length > 1){ window.history.back(); return; }
     var App = pluginCap('App');
     if(App && App.exitApp){ App.exitApp(); }
@@ -318,14 +697,11 @@ html += '<div class="card"><div><b>' + esc(d.nama) + '</b><br><small>' + esc(d.k
     });
   }
 
-  // ================= Biar bisa dipanggil dari onclick di HTML =================
-  window.keLokasiSaya = keLokasiSaya;
-  window.tandaiPosisiSaya = tandaiPosisiSaya;
-  window.simpan = simpan;
-  window.bacaFoto = bacaFoto;
-  window.hapus = hapus;
-
+  // ================= MULAI =================
+  renderChips();
+  updateTitik();
   tampilkan();
+  setTab('tandai');
 })();
 </script>
 </body>
