@@ -43,6 +43,11 @@ jobs:
       - name: Buat ikon aplikasi
         run: npx @capacitor/assets generate --android --iconBackgroundColor '#173d30' --iconBackgroundColorDark '#173d30'
       - run: npx cap sync android
+      - run: npx cap sync android
+      - name: Izin lokasi GPS Android
+        run: |
+         M=android/app/src/main/AndroidManifest.xml
+         grep -q ACCESS_FINE_LOCATION $M || sed -i 's/<application/<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" \/>\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" \/>\n    <application/' $M
       - name: Build APK debug
         working-directory: android
         run: |
