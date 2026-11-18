@@ -23,6 +23,7 @@ jobs:
         run: |
           mkdir -p www
           cp index.html www/index.html
+          cp herping.html www/herping.html
       - run: npx cap add android
       - name: Fix Gradle biar gak 504
         run: sed -i 's|gradle-8.2.1-all.zip|gradle-8.7-all.zip|g; s|github.com/gradle/gradle-distributions|services.gradle.org/distributions|g' android/gradle/wrapper/gradle-wrapper.properties
@@ -48,6 +49,10 @@ jobs:
         run: |
          M=android/app/src/main/AndroidManifest.xml
          grep -q ACCESS_FINE_LOCATION $M || sed -i 's/<application/<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" \/>\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" \/>\n    <application/' $M
+      - name: Izin kamera Android
+        run: |
+         M=android/app/src/main/AndroidManifest.xml
+         grep -q CAMERA $M || sed -i 's/<application/<uses-permission android:name="android.permission.CAMERA" \/>\n    <application/' $M 
       - name: Build APK debug
         working-directory: android
         run: |
